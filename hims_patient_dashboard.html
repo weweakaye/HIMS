@@ -159,7 +159,7 @@
         
         <div id="sidebar-overlay" class="hidden md:hidden sidebar-overlay" onclick="toggleSidebar()"></div>
 
-        <div id="sidebar" class="sidebar fixed top-0 left-0 h-full flex-col justify-between py-6 transition-transform duration-300 transform -translate-x-full md:relative md:translate-x-0 md:flex">
+        <div id="sidebar" class="sidebar hidden fixed top-0 left-0 h-full flex-col justify-between py-6 transition-transform duration-300 transform -translate-x-full md:relative md:translate-x-0 md:flex">
             <div>
                 <div class="px-6 mb-10 flex items-center">
                     <img src="logo.png" alt="HIMS Logo" class="hims-logo-dashboard">
@@ -230,11 +230,12 @@
     <script type="text/javascript">
         // --- Data ---
         const DATA = {
+            // MODIFICATION 1: All four appointments are now set to 'Scheduled'
             appointments: [
                 { id: 1, name: 'Dr. Gigi Murin', specialty: 'Physician', date: 'December 21, 2025', status: 'Scheduled' },
-                { id: 2, name: 'Dr. Cecilia Immergreen', specialty: 'Pediatrician', date: 'September 21, 2026', status: 'Available' },
-                { id: 3, name: 'Dr. Raora Panthera', specialty: 'Ophthalmologist', date: 'N/A', status: 'Unavailable' },
-                { id: 4, name: 'Dr. John Doe', specialty: 'Dermatologist', date: 'N/A', status: 'Scheduled' },
+                { id: 4, name: 'Dr. John Doe', specialty: 'Dermatologist', date: 'December 28, 2025', status: 'Scheduled' },
+                { id: 5, name: 'Dr. Alice Cooper', specialty: 'Cardiologist', date: 'January 5, 2026', status: 'Scheduled' },
+                { id: 6, name: 'Dr. Bob Marley', specialty: 'Neurologist', date: 'February 10, 2026', status: 'Scheduled' },
             ],
             labResults: [
                 { id: '0000425-2025-003-U01', test: 'Urinalysis', date: 'December 2, 2025', status: 'Not released', result: null },
@@ -268,6 +269,7 @@
             const sidebar = document.getElementById('sidebar');
             const overlay = document.getElementById('sidebar-overlay');
             const isOpen = sidebar.classList.contains('translate-x-0');
+            const isMobile = window.innerWidth < 768;
 
             if (isOpen) {
                 // Close sidebar
@@ -275,8 +277,13 @@
                 sidebar.classList.add('-translate-x-full');
                 overlay.classList.add('hidden');
                 document.body.classList.remove('overflow-hidden');
+                // Only hide completely on mobile after transition
+                if (isMobile) {
+                    setTimeout(() => sidebar.classList.add('hidden'), 300);
+                }
             } else {
                 // Open sidebar
+                sidebar.classList.remove('hidden'); // Show before translating
                 sidebar.classList.remove('-translate-x-full');
                 sidebar.classList.add('translate-x-0');
                 overlay.classList.remove('hidden');
@@ -286,7 +293,10 @@
         
         function closeSidebarOnMobile() {
             if (window.innerWidth < 768) { // 768px is Tailwind's 'md' breakpoint
-                toggleSidebar();
+                // Only call toggleSidebar if it's currently open
+                if (document.getElementById('sidebar').classList.contains('translate-x-0')) {
+                    toggleSidebar();
+                }
             }
         }
 
@@ -355,6 +365,17 @@
                 }
             });
 
+            // Initial setup for sidebar visibility (ensures it's open on desktop)
+            if (window.innerWidth >= 768) {
+                document.getElementById('sidebar').classList.remove('hidden');
+                document.getElementById('sidebar').classList.remove('-translate-x-full');
+            } else {
+                 // Ensure it is properly hidden on mobile start
+                document.getElementById('sidebar').classList.add('hidden');
+                document.getElementById('sidebar').classList.add('-translate-x-full');
+            }
+
+
             // Initial render: Show the dashboard (this file IS the dashboard)
             renderDashboardPage(DATA.currentDashboardPage);
         }
@@ -400,8 +421,8 @@
         // --- Page Content Generators ---
 
         function generateAppointmentsContent() {
-            // Find the NEXT scheduled appointment to treat as the main one
-            const scheduledAppt = DATA.appointments.find(a => a.status === 'Scheduled');
+            // We use Dr. Gigi Murin (ID 1) as the 'main' appointment template
+            const mainScheduledAppt = DATA.appointments.find(a => a.id === 1);
             
             let initialMessage = '';
             let dateInputs = '';
@@ -415,13 +436,13 @@
                 <option value="June">June</option>
                 <option value="July">July</option>
                 <option value="August">August</option>
-                <option value="September" ${!scheduledAppt ? 'selected' : ''}>September</option>
+                <option value="September" ${!mainScheduledAppt ? 'selected' : ''}>September</option>
                 <option value="October">October</option>
                 <option value="November">November</option>
-                <option value="December" ${scheduledAppt ? 'selected' : ''}>December</option>
+                <option value="December" ${mainScheduledAppt ? 'selected' : ''}>December</option>
             `;
 
-            if (scheduledAppt) {
+            if (mainScheduledAppt) {
                 initialMessage = ``;
                 dateInputs = `
                     <div class="mb-6 flex space-x-4 items-center flex-wrap">
@@ -447,81 +468,71 @@
                 `;
             }
 
-            // Generate the cards for all doctors
-            const doctorCardsHtml = DATA.appointments.map(app => {
+            // Generate the cards based on the required templates
+            let mainCardHtml = '';
+            let otherCardsHtml = [];
+            let otherScheduledCards = [];
+
+            DATA.appointments.forEach(app => {
                 let actionButtons;
                 let statusBadge = '';
-                const isMainScheduled = scheduledAppt && app.id === scheduledAppt.id;
-
-                switch (app.status) {
-                    case 'Scheduled':
-                        if (isMainScheduled) {
-                            // Main scheduled appointment styling (with Cancel/Reschedule buttons)
-                            statusBadge = `<span class="text-sm font-semibold text-gray-600">Date: ${app.date}</span>`;
-                            actionButtons = `
-                                <div class="flex space-x-4 flex-wrap">
-                                    <button onclick="handleAppointmentAction('cancel', ${app.id}, '${app.name}')" class="btn-cancel inline-flex items-center text-sm mb-2 md:mb-0">
-                                        Cancel Appointment
-                                    </button>
-                                    <button onclick="handleAppointmentAction('reschedule', ${app.id}, '${app.name}')" class="btn-schedule inline-flex items-center text-sm">
-                                        Reschedule
-                                    </button>
-                                </div>
-                            `;
-                        } else {
-                            // Other scheduled appointments in the list below (as a badge)
-                            actionButtons = `<span class="badge-scheduled">Scheduled</span>`;
-                        }
-                        break;
-                    case 'Available':
-                        actionButtons = `
-                            <button onclick="handleAppointmentAction('schedule', ${app.id}, '${app.name}')" class="btn-schedule inline-flex items-center text-sm">
-                                Schedule an appointment
+                
+                // Card 1: Main Scheduled Appointment (Gigi Murin)
+                if (app.id === 1) {
+                    statusBadge = `<span class="text-sm font-semibold text-gray-600">Date: ${app.date}</span>`;
+                    actionButtons = `
+                        <div class="flex space-x-4 flex-wrap">
+                            <button onclick="handleAppointmentAction('cancel', ${app.id}, '${app.name}')" class="btn-cancel inline-flex items-center text-sm mb-2 md:mb-0">
+                                Cancel Appointment
                             </button>
-                        `;
-                        break;
-                    case 'Unavailable':
-                        actionButtons = `
-                            <span class="badge-unavailable">
-                                Unavailable
-                            </span>
-                        `;
-                        break;
-                    default:
-                        actionButtons = '';
-                }
-
-                return `
-                    <div id="card-${app.id}" class="card p-4 sm:p-6 mb-4 ${isMainScheduled ? 'main-scheduled-card' : ''}">
-                        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-2">
-                            <div>
-                                <h3 class="text-lg font-bold">${app.name}</h3>
-                                <p class="text-gray-500 text-sm">${app.specialty}</p>
+                            <button onclick="handleAppointmentAction('reschedule', ${app.id}, '${app.name}')" class="btn-schedule inline-flex items-center text-sm">
+                                Reschedule
+                            </button>
+                        </div>
+                    `;
+                    mainCardHtml = `
+                        <div id="card-1" class="card p-4 sm:p-6 mb-4 main-scheduled-card">
+                            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-2">
+                                <div>
+                                    <h3 class="text-lg font-bold">${app.name}</h3>
+                                    <p class="text-gray-500 text-sm">${app.specialty}</p>
+                                </div>
+                                ${statusBadge}
                             </div>
-                            ${isMainScheduled ? statusBadge : ''}
+                            <div class="mt-4">${actionButtons}</div>
                         </div>
-                        
-                        <div class="mt-4">
-                            ${actionButtons}
+                    `;
+                // Other Scheduled cards (ID 4, 5, 6)
+                } else if (app.status === 'Scheduled') {
+                    actionButtons = `<span class="badge-scheduled">${app.status}: ${app.date}</span>`;
+                    otherScheduledCards.push(`
+                        <div id="card-${app.id}" class="card p-4 sm:p-6 mb-4">
+                            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-2">
+                                <div>
+                                    <h3 class="text-lg font-bold">${app.name}</h3>
+                                    <p class="text-gray-500 text-sm">${app.specialty}</p>
+                                </div>
+                            </div>
+                            <div class="mt-4">${actionButtons}</div>
                         </div>
-                    </div>
-                `;
-            }).join('');
+                    `);
+                } 
+                // Available and Unavailable card logic is removed/unnecessary as all are scheduled.
+            });
             
-            // Separate the main scheduled card (if it exists) from the list below
-            const mainCardMatch = doctorCardsHtml.match(/<div[^>]*id="card-\d+"[^>]*main-scheduled-card[^>]*>.*?<\/div>/s);
-            const mainCard = scheduledAppt ? `<div class="space-y-4 mb-8">${mainCardMatch ? mainCardMatch[0] : ''}</div>` : '';
-            const otherCards = scheduledAppt ? doctorCardsHtml.replace(mainCardMatch ? mainCardMatch[0] : '', '').replace(/(\s*)\n\s*/g, '') : doctorCardsHtml;
+            // Combine all other scheduled cards into the final HTML array
+            otherCardsHtml = otherScheduledCards;
+
 
             return `
-                ${scheduledAppt ? `<h2 class="text-xl font-semibold mb-3">Your Next Appointment</h2>` : initialMessage}
+                ${mainScheduledAppt ? `<h2 class="text-xl font-semibold mb-3">Your Next Appointment</h2>` : initialMessage}
                 
-                ${scheduledAppt ? mainCard : ''}
+                ${mainScheduledAppt ? `<div class="space-y-4 mb-8">${mainCardHtml}</div>` : ''}
                 ${dateInputs}
 
                 <div class="space-y-4 mt-6">
-                    ${scheduledAppt ? `<h2 class="text-xl font-semibold mb-3">Other Doctors</h2>` : ''}
-                    ${scheduledAppt ? otherCards : doctorCardsHtml}
+                    <h2 class="text-xl font-semibold mb-3">Other Scheduled Appointments</h2>
+                    ${otherCardsHtml.join('')}
                 </div>
             `;
         }
@@ -532,20 +543,23 @@
             let body = '';
             let showConfirm = false;
             let onConfirm = null;
+            
+            const appt = DATA.appointments.find(a => a.id === id);
+            const date = appt ? appt.date : 'N/A';
 
             switch (action) {
                 case 'cancel':
                     title = 'Confirm Cancellation';
-                    body = `Are you sure you want to cancel your appointment with ${doctorName} on December 21, 2025? This action cannot be undone.`;
+                    body = `Are you sure you want to cancel your appointment with ${doctorName} on ${date}? This action cannot be undone.`;
                     showConfirm = true;
-                    onConfirm = () => showModal('Success', `The appointment with ${doctorName} has been cancelled. (Mock action)`, false);
+                    onConfirm = () => showModal('Success', `The appointment with ${doctorName} has been cancelled.`, false);
                     break;
                 case 'reschedule':
-                    title = 'Reschedule Appointment (Mock)';
+                    title = 'Reschedule Appointment';
                     body = `Rescheduling UI would appear here. Select a new date for ${doctorName}.`;
                     break;
                 case 'schedule':
-                    title = 'Schedule Appointment (Mock)';
+                    title = 'Schedule Appointment';
                     body = `You have successfully scheduled an appointment with ${doctorName}.`;
                     break;
             }
@@ -655,11 +669,11 @@
 
             switch (action) {
                 case 'update-profile':
-                    title = 'Update Profile (Mock)';
+                    title = 'Update Profile';
                     body = 'A form to update your name and contact details would open here.';
                     break;
                 case 'change-password':
-                    title = 'Change Password (Mock)';
+                    title = 'Change Password';
                     body = 'A new window or form for password change would appear.';
                     break;
                 case 'log-out':
