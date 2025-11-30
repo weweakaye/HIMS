@@ -166,11 +166,6 @@
             currentSubRole: null, 
         };
 
-        // --- Configuration: Base Path for Local Testing ---
-        // This is a placeholder for your local directory structure.
-        const BASE_LOCAL_PATH = "file:///C:/Users/Kaye%20Ann%20Oquindo/Downloads/SAD-PROTOTYPE/";
-
-
         // --- View Switching Logic ---
 
         function renderView(viewId) {
@@ -256,9 +251,8 @@
         }
 
         function generateStaffLoginForm(role) {
-            let filename = `hims_${role.toLowerCase()}_dashboard.html`;
-            // Construct the full local file path for staff dashboards
-            let dashboardPath = BASE_LOCAL_PATH + filename; 
+            // *** CRITICAL CHANGE: Only use the relative filename for Vercel/GitHub Pages deployment ***
+            let dashboardPath = `hims_${role.toLowerCase()}_dashboard.html`; 
 
             return `
                 <div class="flex w-full justify-start">
@@ -292,8 +286,8 @@
         }
         
         function generatePatientAuthForms() {
-             let filename = 'hims_patient_dashboard.html';
-             let dashboardPath = BASE_LOCAL_PATH + filename; 
+             // *** CRITICAL CHANGE: Only use the relative filename for Vercel/GitHub Pages deployment ***
+             let dashboardPath = 'hims_patient_dashboard.html'; 
 
              return `
                  <div class="flex flex-col md:flex-row w-full space-y-8 md:space-y-0 md:space-x-12">
@@ -350,9 +344,10 @@
              `;
         }
 
-        // --- Simulated File Opening Logic ---
+        // --- Core Navigation Logic ---
+
         function openDashboardInSameTab(path) {
-            // Replaces the current page with the dashboard page
+            // This function replaces the current page with the dashboard page.
             window.location.href = path; 
         }
 
@@ -367,14 +362,12 @@
                  return;
             }
 
-            // Simplified bodyText - removed 'Mock'
-            const bodyText = `Welcome, ${role}. Login successful.`;
+            const bodyText = `Welcome, ${role}. Login successful. You will be redirected to the dashboard.`;
             
             showModal(
                 'Login Successful', 
                 bodyText, 
                 true, 
-                // Use the new function to open in the same tab
                 () => openDashboardInSameTab(dashboardPath)
             );
         }
@@ -391,14 +384,12 @@
                     return;
                 }
 
-                // Simplified bodyText - removed 'Mock'
-                const bodyText = `Welcome, Patient. Login successful.`;
+                const bodyText = `Welcome, Patient. Login successful. You will be redirected to the dashboard.`;
 
                 showModal(
                     'Login Successful', 
                     bodyText, 
                     true, 
-                    // Use the new function to open in the same tab
                     () => openDashboardInSameTab(dashboardPath)
                 );
             } else if (type === 'register') {
@@ -408,7 +399,6 @@
                     return;
                 }
 
-                // Removed 'Mock Register'
                 showModal('Registration Complete', 'Thank you for registering. Please proceed to the Login section.', false);
             }
         }
@@ -422,7 +412,8 @@
             }
         }
 
-        // Modified showModal to always use 'Okay' as the only button and handle confirmation through it.
+        // --- Modal Helper Functions ---
+
         function showModal(title, body, showConfirm = false, onConfirm = null) {
             document.getElementById('modal-title').textContent = title;
             document.getElementById('modal-body').innerHTML = body;
@@ -430,7 +421,7 @@
             
             confirmBtn.textContent = 'Okay';
 
-            // Reset modal button styles (set back to green default for success/ok)
+            // Set button styles to green for success/ok
             confirmBtn.classList.remove('hidden', 'bg-red-600', 'hover:bg-red-700', 'bg-gray-400', 'hover:bg-gray-500');
             confirmBtn.classList.add('bg-green-600', 'hover:bg-green-700');
             document.getElementById('modal-close-btn').classList.add('hidden'); 
@@ -439,7 +430,7 @@
                 // If showConfirm is true (for successful logins), the 'Okay' button executes the onConfirm function (which opens the dashboard)
                 confirmBtn.onclick = () => { 
                     onConfirm(); 
-                    closeModal(); // Closing modal right before redirecting
+                    // No need to call closeModal() here, as onConfirm() performs a redirect
                 };
             } else {
                 // For regular messages (errors, registration success), 'Okay' just closes the modal
