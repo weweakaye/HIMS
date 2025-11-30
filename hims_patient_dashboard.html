@@ -22,7 +22,6 @@
             --btn-schedule-border: #6ee7b7; /* Emerald-300 for submit button border */
             --btn-cancel-bg: #fef2f2; /* Red-50 */
             --btn-cancel-text: #ef4444; /* Red-500 */
-            --btn-unavailable-bg: #fef2f2;
             --btn-unavailable-border: #fca5a5;
             
             /* Fonts */
@@ -39,21 +38,24 @@
             border: 1px solid var(--light-border);
             border-radius: 12px;
             box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+            background-color: white;
         }
         
         /* Styles for the new image logo in the sidebar */
         .hims-logo-dashboard {
-            width: 70px; /* Adjusted size to fit well in the sidebar header */
+            width: 70px; 
             height: auto;
             margin-right: 8px; 
             vertical-align: middle; 
         }
 
         /* Dashboard specific styles */
+        /* MODIFIED: Sidebar for responsiveness */
         .sidebar {
-            width: 280px;
+            width: 260px; /* Narrower for mobile */
             background-color: white;
             border-right: 1px solid var(--light-border);
+            z-index: 40; /* Above the main content */
         }
 
         .header-bar {
@@ -87,7 +89,7 @@
         }
 
         .btn-schedule:hover {
-            background-color: #f0fdf4; /* Tailwind green-50 */
+            background-color: #f0fdf4; 
         }
 
         .btn-cancel {
@@ -100,7 +102,7 @@
         }
 
         .btn-cancel:hover {
-            background-color: #fee2e2; /* Tailwind red-100 */
+            background-color: #fee2e2; 
         }
         
         .badge-scheduled {
@@ -125,18 +127,39 @@
             border: 1px solid var(--btn-unavailable-border);
         }
 
+        /* Log Out button style */
+        .btn-log-out {
+            border: 1px solid var(--light-border);
+            background-color: #f9fafb;
+            padding: 0.5rem 1rem;
+            border-radius: 0.5rem;
+        }
+
         /* Modal Backdrop */
         .modal-backdrop {
             background-color: rgba(0, 0, 0, 0.5);
             z-index: 50;
         }
 
+        /* Utility for Mobile-Only Overlay */
+        .sidebar-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: 30;
+        }
     </style>
 </head>
 <body class="h-screen overflow-hidden">
 
     <div id="dashboard-view" class="h-full flex flex-row">
-        <div class="sidebar flex flex-col justify-between py-6">
+        
+        <div id="sidebar-overlay" class="hidden md:hidden sidebar-overlay" onclick="toggleSidebar()"></div>
+
+        <div id="sidebar" class="sidebar fixed top-0 left-0 h-full flex-col justify-between py-6 transition-transform duration-300 transform -translate-x-full md:relative md:translate-x-0 md:flex">
             <div>
                 <div class="px-6 mb-10 flex items-center">
                     <img src="logo.png" alt="HIMS Logo" class="hims-logo-dashboard">
@@ -166,14 +189,24 @@
                 </nav>
             </div>
 
-            <div class="px-6 pt-6 border-t border-gray-100 flex items-center">
-                <div class="h-8 w-8 rounded-full bg-green-200 flex items-center justify-center text-xs font-bold text-green-700 mr-3">ERB</div>
-                <p class="text-sm font-medium">Elizabeth Rose Bloodflame</p>
+            <div class="px-6 pt-6 border-t border-gray-100 space-y-4">
+                <div class="flex items-center">
+                    <div class="h-8 w-8 rounded-full bg-green-200 flex items-center justify-center text-xs font-bold text-green-700 mr-3">ERB</div>
+                    <p class="text-sm font-medium">Elizabeth Rose Bloodflame</p>
+                </div>
+                <button onclick="handleSettingsAction('log-out')" class="btn-log-out w-full px-6 py-2 text-sm rounded-lg text-gray-700 hover:bg-gray-200 transition-colors flex items-center justify-center">
+                     <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 mr-2" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+                    Log Out
+                </button>
             </div>
         </div>
 
-        <div class="flex-1 flex flex-col overflow-auto main-content bg-white">
-            <header class="header-bar p-4 md:p-6 shadow-sm">
+        <div class="flex-1 flex flex-col overflow-auto main-content">
+            
+            <header class="header-bar p-4 md:p-6 shadow-sm flex items-center">
+                <button id="menu-toggle" class="md:hidden mr-4" onclick="toggleSidebar()">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6 text-gray-700" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
+                </button>
                 <h2 class="text-xl font-semibold">Elizabeth Rose Bloodflame</h2>
             </header>
 
@@ -195,13 +228,13 @@
 
 
     <script type="text/javascript">
-        // --- Data (Renamed from Mock Data) ---
+        // --- Data ---
         const DATA = {
             appointments: [
                 { id: 1, name: 'Dr. Gigi Murin', specialty: 'Physician', date: 'December 21, 2025', status: 'Scheduled' },
                 { id: 2, name: 'Dr. Cecilia Immergreen', specialty: 'Pediatrician', date: 'September 21, 2026', status: 'Available' },
                 { id: 3, name: 'Dr. Raora Panthera', specialty: 'Ophthalmologist', date: 'N/A', status: 'Unavailable' },
-                { id: 4, name: 'Dr. John Doe', specialty: 'Dermatologist', date: 'N/A', status: 'Scheduled' }, // Another scheduled to test the logic
+                { id: 4, name: 'Dr. John Doe', specialty: 'Dermatologist', date: 'N/A', status: 'Scheduled' },
             ],
             labResults: [
                 { id: '0000425-2025-003-U01', test: 'Urinalysis', date: 'December 2, 2025', status: 'Not released', result: null },
@@ -229,6 +262,34 @@
             currentDashboardPage: 'appointments' // Tracks the active dashboard link
         };
 
+        // --- Responsive UI Toggle Function ---
+
+        function toggleSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            const overlay = document.getElementById('sidebar-overlay');
+            const isOpen = sidebar.classList.contains('translate-x-0');
+
+            if (isOpen) {
+                // Close sidebar
+                sidebar.classList.remove('translate-x-0');
+                sidebar.classList.add('-translate-x-full');
+                overlay.classList.add('hidden');
+                document.body.classList.remove('overflow-hidden');
+            } else {
+                // Open sidebar
+                sidebar.classList.remove('-translate-x-full');
+                sidebar.classList.add('translate-x-0');
+                overlay.classList.remove('hidden');
+                document.body.classList.add('overflow-hidden');
+            }
+        }
+        
+        function closeSidebarOnMobile() {
+            if (window.innerWidth < 768) { // 768px is Tailwind's 'md' breakpoint
+                toggleSidebar();
+            }
+        }
+
         // --- Dashboard UI State and Functions ---
 
         /**
@@ -249,6 +310,8 @@
             if (activeLink) {
                 activeLink.classList.add('active-page');
             }
+            
+            closeSidebarOnMobile(); // Close sidebar after clicking a link
 
             switch (pageId) {
                 case 'appointments':
@@ -303,9 +366,14 @@
          */
         function showModal(title, body, showConfirm = false, onConfirm = null) {
             document.getElementById('modal-title').textContent = title;
-            document.getElementById('modal-body').textContent = body;
+            document.getElementById('modal-body').innerHTML = body;
             const confirmBtn = document.getElementById('modal-confirm-btn');
             
+            // Revert confirmation button appearance for regular modal usage
+            confirmBtn.classList.remove('bg-green-600', 'hover:bg-green-700');
+            confirmBtn.classList.add('bg-red-600', 'hover:bg-red-700');
+            confirmBtn.textContent = 'Confirm';
+
             if (showConfirm && onConfirm) {
                 confirmBtn.classList.remove('hidden');
                 confirmBtn.onclick = () => { 
@@ -316,7 +384,7 @@
                 confirmBtn.classList.add('hidden');
                 confirmBtn.onclick = null;
             }
-
+            
             document.getElementById('app-modal').classList.remove('hidden');
             document.getElementById('app-modal').classList.add('flex');
         }
@@ -354,10 +422,9 @@
             `;
 
             if (scheduledAppt) {
-                // If there's a scheduled appointment, use date from data
                 initialMessage = ``;
                 dateInputs = `
-                    <div class="mb-6 flex space-x-4 items-center">
+                    <div class="mb-6 flex space-x-4 items-center flex-wrap">
                         <label class="text-sm font-medium text-gray-700">Month:</label>
                         <select class="p-2 border border-gray-300 rounded-lg text-sm w-32">
                             ${monthsOptions}
@@ -367,10 +434,9 @@
                     </div>
                 `;
             } else {
-                // If no scheduled appointment
                 initialMessage = `<p class="text-gray-600 mb-6">You do not have any appointments. Schedule one below.</p>`;
                 dateInputs = `
-                    <div class="mb-6 flex space-x-4 items-center">
+                    <div class="mb-6 flex space-x-4 items-center flex-wrap">
                         <label class="text-sm font-medium text-gray-700">Month:</label>
                         <select class="p-2 border border-gray-300 rounded-lg text-sm w-32">
                             ${monthsOptions}
@@ -393,8 +459,8 @@
                             // Main scheduled appointment styling (with Cancel/Reschedule buttons)
                             statusBadge = `<span class="text-sm font-semibold text-gray-600">Date: ${app.date}</span>`;
                             actionButtons = `
-                                <div class="flex space-x-4">
-                                    <button onclick="handleAppointmentAction('cancel', ${app.id}, '${app.name}')" class="btn-cancel inline-flex items-center text-sm">
+                                <div class="flex space-x-4 flex-wrap">
+                                    <button onclick="handleAppointmentAction('cancel', ${app.id}, '${app.name}')" class="btn-cancel inline-flex items-center text-sm mb-2 md:mb-0">
                                         Cancel Appointment
                                     </button>
                                     <button onclick="handleAppointmentAction('reschedule', ${app.id}, '${app.name}')" class="btn-schedule inline-flex items-center text-sm">
@@ -426,8 +492,8 @@
                 }
 
                 return `
-                    <div id="card-${app.id}" class="card p-6 mb-4 ${isMainScheduled ? 'main-scheduled-card' : ''}">
-                        <div class="flex justify-between items-start mb-2">
+                    <div id="card-${app.id}" class="card p-4 sm:p-6 mb-4 ${isMainScheduled ? 'main-scheduled-card' : ''}">
+                        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-2">
                             <div>
                                 <h3 class="text-lg font-bold">${app.name}</h3>
                                 <p class="text-gray-500 text-sm">${app.specialty}</p>
@@ -443,16 +509,18 @@
             }).join('');
             
             // Separate the main scheduled card (if it exists) from the list below
-            const mainCard = scheduledAppt ? `<div class="space-y-4 mb-8">${document.createElement('div').innerHTML = doctorCardsHtml.match(/<div[^>]*id="card-\d+"[^>]*main-scheduled-card[^>]*>.*?<\/div>/s)[0]}</div>` : '';
-            const otherCards = scheduledAppt ? doctorCardsHtml.replace(mainCard.trim(), '').replace(/<div[^>]*id="card-\d+"[^>]*main-scheduled-card[^>]*>.*?<\/div>/gs, '').replace(/(\s*)\n\s*/g, '') : doctorCardsHtml;
+            const mainCardMatch = doctorCardsHtml.match(/<div[^>]*id="card-\d+"[^>]*main-scheduled-card[^>]*>.*?<\/div>/s);
+            const mainCard = scheduledAppt ? `<div class="space-y-4 mb-8">${mainCardMatch ? mainCardMatch[0] : ''}</div>` : '';
+            const otherCards = scheduledAppt ? doctorCardsHtml.replace(mainCardMatch ? mainCardMatch[0] : '', '').replace(/(\s*)\n\s*/g, '') : doctorCardsHtml;
 
             return `
-                ${scheduledAppt ? `<h2 class="text-xl font-semibold mb-3">Appointment</h2>` : initialMessage}
+                ${scheduledAppt ? `<h2 class="text-xl font-semibold mb-3">Your Next Appointment</h2>` : initialMessage}
                 
                 ${scheduledAppt ? mainCard : ''}
                 ${dateInputs}
 
                 <div class="space-y-4 mt-6">
+                    ${scheduledAppt ? `<h2 class="text-xl font-semibold mb-3">Other Doctors</h2>` : ''}
                     ${scheduledAppt ? otherCards : doctorCardsHtml}
                 </div>
             `;
@@ -468,16 +536,16 @@
             switch (action) {
                 case 'cancel':
                     title = 'Confirm Cancellation';
-                    body = `Are you sure you want to cancel your appointment with ${doctorName} on December 21, 2025?`;
+                    body = `Are you sure you want to cancel your appointment with ${doctorName} on December 21, 2025? This action cannot be undone.`;
                     showConfirm = true;
-                    onConfirm = () => showModal('Success', `The appointment with ${doctorName} has been cancelled.`, false);
+                    onConfirm = () => showModal('Success', `The appointment with ${doctorName} has been cancelled. (Mock action)`, false);
                     break;
                 case 'reschedule':
-                    title = 'Reschedule Appointment';
+                    title = 'Reschedule Appointment (Mock)';
                     body = `Rescheduling UI would appear here. Select a new date for ${doctorName}.`;
                     break;
                 case 'schedule':
-                    title = 'Schedule Appointment';
+                    title = 'Schedule Appointment (Mock)';
                     body = `You have successfully scheduled an appointment with ${doctorName}.`;
                     break;
             }
@@ -489,8 +557,8 @@
         function generateLabResultsContent() {
             const resultList = DATA.labResults.map(result => {
                 const resultContent = result.result 
-                    ? `<p class="font-semibold mt-2 mb-2">Result:</p>
-                        <div class="text-sm text-gray-700 grid grid-cols-2 md:grid-cols-4 gap-2">
+                    ? `<p class="font-semibold mt-2 mb-2">Result Details:</p>
+                        <div class="text-sm text-gray-700 grid grid-cols-2 md:grid-cols-4 gap-2 p-2">
                             ${result.result.split(', ').map(line => `<span>${line}</span>`).join('')}
                         </div>`
                     : `<p class="font-semibold text-gray-500 mt-2 mb-2">Result:</p>
@@ -514,7 +582,7 @@
         function generateRecordsContent() {
             const notesHtml = DATA.records.notes.map(note => `
                 <div class="card p-4 mb-4">
-                    <div class="flex justify-between items-center text-sm font-medium mb-2">
+                    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center text-sm font-medium mb-2">
                         <span>Record ID: ${note.id}</span>
                         <span class="text-gray-600 text-xs">${note.time} | ${note.date}</span>
                     </div>
@@ -552,8 +620,8 @@
             const settings = DATA.settings;
             return `
                 <div class="card p-6 mb-8">
-                    <div class="flex justify-between items-center mb-4">
-                        <h2 class="text-lg font-semibold">Profile Information</h2>
+                    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4">
+                        <h2 class="text-lg font-semibold mb-2 sm:mb-0">Profile Information</h2>
                         <button onclick="handleSettingsAction('update-profile')" class="btn-schedule inline-flex items-center px-3 py-1 text-xs rounded-full border">
                             Update Profile
                         </button>
@@ -566,7 +634,7 @@
                     <div class="space-y-2 text-sm">
                         <p><span class="font-medium">Contact Number:</span> ${settings.contactNumber}</p>
                         <p><span class="font-medium">Email:</span> ${settings.email}</p>
-                        <p class="flex items-center"><span class="font-medium mr-2">Password:</span> ********** <button onclick="handleSettingsAction('change-password')" class="text-blue-500 hover:text-blue-600 ml-2">(Change Password)</button></p>
+                        <p class="flex items-center flex-wrap"><span class="font-medium mr-2">Password:</span> ********** <button onclick="handleSettingsAction('change-password')" class="text-blue-500 hover:text-blue-600 ml-2">(Change Password)</button></p>
                     </div>
                     <div class="h-px bg-gray-200 my-4"></div>
                     <div class="space-y-2 text-sm">
@@ -576,12 +644,7 @@
                     </div>
                 </div>
                 
-                <div class="flex justify-end">
-                    <button onclick="handleSettingsAction('log-out')" class="px-6 py-2 text-sm rounded-lg bg-gray-100 text-gray-700 hover:bg-gray-200 transition-colors border border-gray-300">
-                        Log Out
-                    </button>
-                </div>
-            `;
+                `;
         }
         
         function handleSettingsAction(action) {
@@ -592,28 +655,35 @@
 
             switch (action) {
                 case 'update-profile':
-                    title = 'Update Profile';
+                    title = 'Update Profile (Mock)';
                     body = 'A form to update your name and contact details would open here.';
                     break;
                 case 'change-password':
-                    title = 'Change Password';
+                    title = 'Change Password (Mock)';
                     body = 'A new window or form for password change would appear.';
                     break;
                 case 'log-out':
                     title = 'Confirm Log Out';
                     body = 'Are you sure you want to log out of the HIMS dashboard?';
                     showConfirm = true;
-                    // Redirect to index.html
+                    // Mock action: Redirect to index.html upon confirmation
                     onConfirm = () => { 
                         window.location.href = 'index.html';
                     };
                     break;
             }
-            showModal(title, body, showConfirm, onConfirm);
+
+            // For mock actions that don't need confirmation, show modal and close it automatically
+            if (!showConfirm && action !== 'log-out') {
+                showModal(title, body, false, null); 
+                document.getElementById('modal-confirm-btn').classList.add('hidden'); // Ensure Confirm button is hidden for non-confirm actions
+            } else {
+                showModal(title, body, showConfirm, onConfirm);
+            }
         }
 
         // --- Initialize the application on page load ---
-        window.onload = setupListeners;
+        window.onload = () => setupListeners();
     </script>
 </body>
 </html>

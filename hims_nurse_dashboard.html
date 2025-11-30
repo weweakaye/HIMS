@@ -41,10 +41,12 @@
             vertical-align: middle; 
         }
 
+        /* MODIFIED: Sidebar for responsiveness */
         .sidebar {
-            width: 280px;
+            width: 260px; /* Slightly narrower for mobile */
             background-color: white;
             border-right: 1px solid var(--light-border);
+            z-index: 40; 
         }
 
         .header-bar {
@@ -79,9 +81,12 @@
             background-color: #f0fdf4;
         }
         
+        /* Log Out button style */
         .btn-log-out {
             border: 1px solid var(--light-border);
             background-color: #f9fafb;
+            padding: 0.5rem 1rem;
+            border-radius: 0.5rem;
         }
 
         /* Triage Specific Styles */
@@ -137,12 +142,26 @@
             background-color: rgba(0, 0, 0, 0.5);
             z-index: 50;
         }
+        
+        /* Utility for Mobile-Only Overlay */
+        .sidebar-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: 30;
+        }
     </style>
 </head>
 <body class="h-screen overflow-hidden">
 
     <div id="nurse-dashboard-view" class="h-full flex flex-row">
-        <div class="sidebar flex flex-col justify-between py-6">
+        
+        <div id="sidebar-overlay" class="hidden md:hidden sidebar-overlay" onclick="toggleSidebar()"></div>
+
+        <div id="sidebar" class="sidebar fixed top-0 left-0 h-full flex-col justify-between py-6 transition-transform duration-300 transform -translate-x-full md:relative md:translate-x-0 md:flex">
             <div>
                 <div class="px-6 mb-10 flex items-center">
                     <img src="logo.png" alt="HIMS Logo" class="hims-logo-dashboard">
@@ -172,17 +191,26 @@
                 </nav>
             </div>
 
-            <div class="px-6 pt-6 border-t border-gray-100 flex items-center">
-                <div class="h-8 w-8 rounded-full bg-green-200 flex items-center justify-center text-xs font-bold text-green-700 mr-3">NR</div>
-                <div class="leading-tight">
-                    <p class="text-sm font-medium">Nerissa Ravencroft</p>
-                    <p class="text-xs text-gray-500">Nurse</p>
+            <div class="px-6 pt-6 border-t border-gray-100 space-y-4">
+                <div class="flex items-center">
+                    <div class="h-8 w-8 rounded-full bg-green-200 flex items-center justify-center text-xs font-bold text-green-700 mr-3">NR</div>
+                    <div class="leading-tight">
+                        <p class="text-sm font-medium">Nerissa Ravencroft</p>
+                        <p class="text-xs text-gray-500">Nurse</p>
+                    </div>
                 </div>
+                <button onclick="nurseHandleSettingsAction('log-out')" class="btn-log-out w-full px-6 py-2 text-sm rounded-lg text-gray-700 hover:bg-gray-200 transition-colors flex items-center justify-center">
+                     <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 mr-2" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+                    Log Out
+                </button>
             </div>
         </div>
 
         <div class="flex-1 flex flex-col overflow-auto main-content bg-white">
-            <header class="header-bar p-4 md:p-6 shadow-sm">
+            <header class="header-bar p-4 md:p-6 shadow-sm flex items-center">
+                <button id="menu-toggle" class="md:hidden mr-4" onclick="toggleSidebar()">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6 text-gray-700" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
+                </button>
                 <h2 class="text-xl font-semibold">Nerissa Ravencroft</h2>
             </header>
 
@@ -231,10 +259,38 @@
             activeTriageId: null 
         };
 
+        // --- Responsive UI Toggle Function ---
+
+        function toggleSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            const overlay = document.getElementById('sidebar-overlay');
+            const isOpen = sidebar.classList.contains('translate-x-0');
+
+            if (isOpen) {
+                // Close sidebar
+                sidebar.classList.remove('translate-x-0');
+                sidebar.classList.add('-translate-x-full');
+                overlay.classList.add('hidden');
+                document.body.classList.remove('overflow-hidden');
+            } else {
+                // Open sidebar
+                sidebar.classList.remove('-translate-x-full');
+                sidebar.classList.add('translate-x-0');
+                overlay.classList.remove('hidden');
+                document.body.classList.add('overflow-hidden');
+            }
+        }
+        
+        function closeSidebarOnMobile() {
+            if (window.innerWidth < 768) {
+                toggleSidebar();
+            }
+        }
+
         // --- Utility Functions (Modal) ---
         function nurseShowModal(title, body, showConfirm = false, onConfirm = null) {
             document.getElementById('nurse-modal-title').textContent = title;
-            document.getElementById('nurse-modal-body').innerHTML = body; // Use innerHTML for <br>
+            document.getElementById('nurse-modal-body').innerHTML = body; 
             const confirmBtn = document.getElementById('nurse-modal-confirm-btn');
             
             if (showConfirm && onConfirm) {
@@ -274,6 +330,8 @@
                 activeLink.classList.add('active-page');
             }
             
+            closeSidebarOnMobile();
+            
             // Handle sub-views (like Triage Detail or Patient Consultation)
             NURSE_DATA.activeTriageId = null;
             if (pageId === 'triage' && subView) {
@@ -291,7 +349,7 @@
                     }
                     break;
                 case 'update-records':
-                    title = 'Patient List';
+                    title = 'Patient Vitals Update';
                     content = generateUpdateRecordsListContent();
                     break;
                 case 'consultations':
@@ -331,20 +389,19 @@
         
         function generateTriageRecordsContent() {
             // Triage List View
-            
             const triageCards = NURSE_DATA.triageRecords.map(t => {
                 const levelClass = getTriageLevelClass(t.triageLevel);
                 
                 return `
-                    <div class="card p-4 mb-4 flex justify-between items-center">
-                        <div class="flex-1">
+                    <div class="card p-4 mb-4 flex flex-col sm:flex-row justify-between items-start sm:items-center">
+                        <div class="flex-1 mb-2 sm:mb-0">
                             <p class="text-base font-semibold">Triage ID: ${t.triageId}</p>
                             <p class="text-sm text-gray-600">Triaged by: ${t.triagedBy}</p>
                             <p class="text-sm text-gray-600">Nurse ID: ${t.nurseId}</p>
                         </div>
-                        <div class="flex flex-col items-end space-y-2">
-                             <p class="text-sm font-medium ${levelClass}">Triage Level: ${t.triageLevel}</p>
-                             <button onclick="renderNurseDashboardPage('triage', '${t.triageId}')" class="btn-action inline-flex items-center space-x-2 px-3 py-1 text-xs">
+                        <div class="flex flex-col items-start sm:items-end space-y-2 w-full sm:w-auto">
+                             <p class="text-sm font-medium ${levelClass} w-full sm:w-auto">Level: ${t.triageLevel}</p>
+                             <button onclick="renderNurseDashboardPage('triage', '${t.triageId}')" class="btn-action inline-flex items-center space-x-2 px-3 py-1 text-xs w-full sm:w-auto">
                                  <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/><path d="M12 13v4"/><path d="M10 15h4"/></svg>
                                  <span>${t.completed ? 'View Details' : 'Start Triage'}</span>
                              </button>
@@ -379,16 +436,16 @@
             // Default active level for display/editing
             const defaultLevel = triage.triageLevel === '-- N/A --' ? null : triage.triageLevel;
             
-            // Format summary for display in the summary card (if completed)
-            const summaryDisplay = triage.summary ? 
-                `<ul>${triage.summary.split(', ').map(s => `<li>• ${s.trim()}</li>`).join('')}</ul>` 
+            // If completed, show formatted list. If not completed, show textarea for input.
+            const summaryDisplay = triage.summary && triage.completed ? 
+                `<div class="card p-4 bg-gray-50 border-gray-300"><p class="text-sm">${triage.summary}</p></div>` 
                 : `<textarea id="triage-summary-input" rows="5" class="w-full p-3 border border-gray-300 rounded-lg" placeholder="Enter symptoms and a brief summary of the patient's condition..."></textarea>`;
             
             // Triage Detail View
             return `
                 <h1 class="text-2xl md:text-3xl font-semibold mb-6">Triage ID: ${triage.triageId}</h1>
                 
-                <div class="card p-8 mb-8">
+                <div class="card p-4 sm:p-8 mb-8">
                     <div class="space-y-2 text-base mb-6">
                         <p><span class="font-medium">Triage ID:</span> ${triage.triageId}</p>
                         <p><span class="font-medium">Patient:</span> ${patient.name} (ID: ${patient.id})</p>
@@ -407,9 +464,7 @@
 
                     <div class="mb-6">
                         <h4 class="text-base font-semibold mb-3">Summary:</h4>
-                        <div class="card p-4 bg-gray-50 border-gray-300">
-                             ${summaryDisplay}
-                        </div>
+                        ${summaryDisplay}
                     </div>
 
                     <div class="flex justify-center mt-8 space-x-4">
@@ -426,7 +481,7 @@
         
         function handleTriageSubmit(triageId, isUpdate) {
             const levelGroup = document.getElementById('triage-level-group');
-            const selectedButton = levelGroup.querySelector('.triage-level-btn.selected');
+            const selectedButton = levelGroup ? levelGroup.querySelector('.triage-level-btn.selected') : null;
             const selectedLevel = selectedButton ? selectedButton.getAttribute('data-level') : null;
             
             const summaryInput = document.getElementById('triage-summary-input');
@@ -437,15 +492,13 @@
                  return;
             }
 
-            // Cleaned up message, removed 'Mock submission/update action'
             const action = isUpdate ? 'Updated' : 'Submitted';
             
-            // In a real application, you would send this data to the backend:
-            // { triageId, triageLevel: selectedLevel, summary }
+            // In a real application, you would send this data to the backend.
             
             nurseShowModal('Triage Record Success', 
-                `Triage Record ${triageId} has been successfully ${action} with Level: <b>${selectedLevel}</b> and Summary: "${summary}".`, 
-                false
+                 `Triage Record ${triageId} has been successfully ${action} with Level: <b>${selectedLevel}</b>.`, 
+                 false
             );
             
             // After submission, navigate back to the list
@@ -467,12 +520,12 @@
         function generateUpdateRecordsListContent() {
             // Patient list for the "Update Records" view
             const patientCards = NURSE_DATA.patients.map(p => `
-                <div class="card p-4 mb-4 flex justify-between items-center">
-                    <div class="flex-1">
-                        <p class="text-base font-semibold">Patient ID: ${p.id}</p>
+                <div class="card p-4 mb-4 flex flex-col sm:flex-row justify-between items-start sm:items-center">
+                    <div class="flex-1 mb-2 sm:mb-0">
+                        <p class="text-base font-semibold">Patient ID: ${p.id} (${p.name})</p>
                         ${p.lastConsultation !== 'N/A' ? `<p class="text-sm text-gray-600">Last Consultation: ${p.lastConsultation}</p>` : `<p class="text-sm text-gray-500 italic">No recent consultation.</p>`}
                     </div>
-                    <button onclick="handleVitalsUpdateForm('${p.id}')" class="btn-action inline-flex items-center space-x-2 px-3 py-1">
+                    <button onclick="handleVitalsUpdateForm('${p.id}')" class="btn-action inline-flex items-center space-x-2 px-3 py-1 w-full sm:w-auto">
                         <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20a8 8 0 1 0 0-16 8 8 0 0 0 0 16z"/><path d="M12 12m-1 0a1 1 0 1 0 2 0 1 1 0 1 0-2 0m2-4h-2"/></svg>
                         <span>Update Vitals</span>
                     </button>
@@ -499,37 +552,37 @@
             const patient = NURSE_DATA.patients.find(p => p.id === patientId);
             
             // Vitals Update Form (used in modal)
+            // Added max-w-sm to the modal itself in HTML, simplifying form width here.
             const vitalsForm = `
                 <h4 class="text-lg font-bold mb-4">Update Vitals for Patient ID: ${patientId} (${patient.name})</h4>
                 <div class="space-y-3">
                     <label class="block"><span class="text-sm font-medium">Temperature (C):</span> <input type="text" id="vitals-temp" value="${patient.vitals.temp || ''}" class="p-2 border border-gray-300 rounded-lg text-sm w-full mt-1"></label>
                     <label class="block"><span class="text-sm font-medium">Heart Rate (bpm):</span> <input type="text" id="vitals-hr" value="${patient.vitals.hr || ''}" class="p-2 border border-gray-300 rounded-lg text-sm w-full mt-1"></label>
-                    <label class="block"><span class="text-sm font-medium">BP (mmHg):</span> <input type="text" id="vitals-bp" placeholder="e.g., 120/80" value="${patient.vitals.bpSys || ''}" class="p-2 border border-gray-300 rounded-lg text-sm w-full mt-1"></label>
+                    <label class="block"><span class="text-sm font-medium">BP (mmHg):</span> <input type="text" id="vitals-bp" placeholder="e.g., 120/80" value="${patient.vitals.bpSys || ''}/${patient.vitals.bpDias || ''}" class="p-2 border border-gray-300 rounded-lg text-sm w-full mt-1"></label>
                     <label class="block"><span class="text-sm font-medium">Weight (kg):</span> <input type="text" id="vitals-weight" value="${patient.vitals.weight || ''}" class="p-2 border border-gray-300 rounded-lg text-sm w-full mt-1"></label>
                     <label class="block"><span class="text-sm font-medium">Height (cm):</span> <input type="text" id="vitals-height" value="${patient.vitals.height || ''}" class="p-2 border border-gray-300 rounded-lg text-sm w-full mt-1"></label>
                 </div>
             `;
 
             nurseShowModal('Vitals Record', vitalsForm, true, () => {
-                // Removed 'Mock update action' text
-                // In a real application, data submission would happen here.
                 nurseShowModal('Update Successful', `Vitals for Patient ID ${patientId} have been successfully updated.`, false);
+                // In a real app, you'd update NURSE_DATA here and re-render
             });
         }
         
         function generateConsultationsListContent() {
              // Show all patients (similar to Update Records list, but leads to read-only record view)
              const consultationCards = NURSE_DATA.patients.map(p => `
-                <div class="card p-4 mb-4 flex justify-between items-center">
-                    <div class="flex-1">
-                        <p class="text-base font-semibold">Patient ID: ${p.id} (${p.name})</p>
-                        ${p.lastConsultation !== 'N/A' ? `<p class="text-sm text-gray-600">Last Consultation: ${p.lastConsultation}</p>` : `<p class="text-sm text-gray-500 italic">No consultation history.</p>`}
-                    </div>
-                    <button onclick="renderNurseDashboardPage('consultations', '${p.id}')" class="btn-action inline-flex items-center space-x-2 px-3 py-1">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/></svg>
-                        <span>View Records</span>
-                    </button>
-                </div>
+                 <div class="card p-4 mb-4 flex flex-col sm:flex-row justify-between items-start sm:items-center">
+                     <div class="flex-1 mb-2 sm:mb-0">
+                         <p class="text-base font-semibold">Patient ID: ${p.id} (${p.name})</p>
+                         ${p.lastConsultation !== 'N/A' ? `<p class="text-sm text-gray-600">Last Consultation: ${p.lastConsultation}</p>` : `<p class="text-sm text-gray-500 italic">No consultation history.</p>`}
+                     </div>
+                     <button onclick="renderNurseDashboardPage('consultations', '${p.id}')" class="btn-action inline-flex items-center space-x-2 px-3 py-1 w-full sm:w-auto">
+                         <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/></svg>
+                         <span>View Records</span>
+                     </button>
+                 </div>
              `).join('');
 
             return `
@@ -550,6 +603,7 @@
 
         function generatePatientConsultationRecord(patientId) {
              const patient = NURSE_DATA.patients.find(p => p.id === patientId);
+             // NOTE: Only one consultation record is mocked in NURSE_DATA.consultationRecords for Alice Johnson (ID 0000001)
              const latestRecord = NURSE_DATA.consultationRecords.find(r => r.patientId === patientId);
              
              if (!patient) return `<p class="text-red-500">Patient not found.</p>`;
@@ -567,12 +621,12 @@
                      
                      <div class="card p-6 w-full md:w-1/3 space-y-2 text-sm">
                          <h4 class="text-base font-semibold mb-2">Vitals from Record</h4>
-                         <p><span class="font-medium">Temperature:</span> ${latestRecord.vitals.temp}</p>
-                         <p><span class="font-medium">Heart Rate:</span> ${latestRecord.vitals.hr}</p>
-                         <p><span class="font-medium">BP (Systolic):</span> ${latestRecord.vitals.bpSys}</p>
-                         <p><span class="font-medium">BP (Diastolic):</span> ${latestRecord.vitals.bpDias}</p>
-                         <p><span class="font-medium">Weight:</span> ${latestRecord.vitals.weight}</p>
-                         <p><span class="font-medium">Height:</span> ${latestRecord.vitals.height}</p>
+                         <p><span class="font-medium">Temperature:</span> ${latestRecord.vitals.temp || 'N/A'}</p>
+                         <p><span class="font-medium">Heart Rate:</span> ${latestRecord.vitals.hr || 'N/A'}</p>
+                         <p><span class="font-medium">BP (Systolic):</span> ${latestRecord.vitals.bpSys || 'N/A'}</p>
+                         <p><span class="font-medium">BP (Diastolic):</span> ${latestRecord.vitals.bpDias || 'N/A'}</p>
+                         <p><span class="font-medium">Weight:</span> ${latestRecord.vitals.weight || 'N/A'}</p>
+                         <p><span class="font-medium">Height:</span> ${latestRecord.vitals.height || 'N/A'}</p>
                      </div>
                  </div>
              ` : `<p class="text-gray-500 italic">No consultation records available for ${patient.name} (ID: ${patient.id}).</p>`;
@@ -581,7 +635,7 @@
                  <h1 class="text-2xl md:text-3xl font-semibold mb-6">${patient.name} (ID: ${patient.id})</h1>
                  ${recordContent}
 
-                 <button onclick="renderNurseDashboardPage('consultations')" class="mt-4 btn-action">
+                 <button onclick="renderNurseDashboardPage('consultations')" class="mt-4 btn-action inline-flex items-center text-sm">
                      <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 mr-1 inline-block" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
                      Back to Consultation List
                  </button>
@@ -590,10 +644,11 @@
 
 
         function generateNurseSettingsContent() {
+             // Log Out button is now in the sidebar footer
              return `
                  <div class="card p-6 mb-8">
-                     <div class="flex justify-between items-center mb-4">
-                         <h2 class="text-lg font-semibold">Profile Information</h2>
+                     <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4">
+                         <h2 class="text-lg font-semibold mb-2 sm:mb-0">Profile Information</h2>
                          <button onclick="nurseHandleSettingsAction('update-profile')" class="btn-action inline-flex items-center px-3 py-1 text-xs rounded-full border">
                              Update Profile
                          </button>
@@ -606,14 +661,14 @@
                      <div class="h-px bg-gray-200 my-4"></div>
                      <div class="space-y-2 text-sm">
                          <p><span class="font-medium">Email:</span> n.ravencroft@hims.com</p>
-                         <p class="flex items-center"><span class="font-medium mr-2">Password:</span> ********** <button onclick="nurseHandleSettingsAction('change-password')" class="text-blue-500 hover:text-blue-600 ml-2">(Change Password)</button></p>
+                         <p class="flex flex-wrap items-center"><span class="font-medium mr-2">Password:</span> ********** <button onclick="nurseHandleSettingsAction('change-password')" class="text-blue-500 hover:text-blue-600 ml-2">(Change Password)</button></p>
                      </div>
-                 </div>
-                 
-                 <div class="flex justify-end">
-                     <button onclick="nurseHandleSettingsAction('log-out')" class="btn-log-out px-6 py-2 text-sm rounded-lg text-gray-700 transition-colors">
-                         Log Out
-                     </button>
+                     <div class="h-px bg-gray-200 my-4"></div>
+                     <div class="space-y-2 text-sm">
+                         <p><span class="font-medium">Date of Birth:</span> N/A</p>
+                         <p><span class="font-medium">Emergency Contact Person:</span> N/A</p>
+                         <p><span class="font-medium">Emergency Contact:</span> N/A</p>
+                     </div>
                  </div>
              `;
         }
@@ -627,19 +682,16 @@
             switch (action) {
                 case 'update-profile':
                     title = 'Update Profile';
-                    // Removed '(Mock Action)'
                     body = 'A form to update your name and contact details would open here.';
                     break;
                 case 'change-password':
                     title = 'Change Password';
-                    // Removed '(Mock Action)'
                     body = 'A new window or form for password change would appear.';
                     break;
                 case 'log-out':
                     title = 'Confirm Log Out';
                     body = 'Are you sure you want to log out of the HIMS dashboard?';
                     showConfirm = true;
-                    // --- MODIFICATION: Redirect to index.html immediately upon confirmation ---
                     onConfirm = () => { 
                         window.location.href = 'index.html';
                     };

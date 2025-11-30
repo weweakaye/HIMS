@@ -34,23 +34,25 @@
 
         /* Logo Style */
         .hims-logo-dashboard {
-            width: 70px; /* Adjusted size to fit well in the sidebar header */
+            width: 70px; 
             height: auto;
             margin-right: 8px; 
             vertical-align: middle; 
         }
 
+        /* MODIFIED for responsiveness */
         .sidebar {
-            width: 280px;
+            width: 260px; /* Slightly narrower for mobile */
             background-color: white;
             border-right: 1px solid var(--light-border);
+            z-index: 40; /* Above the main content */
         }
-
+        
         .header-bar {
             background-color: var(--primary-green);
             border-bottom: 1px solid var(--light-border);
         }
-        
+
         .nav-item {
             color: var(--dark-text);
         }
@@ -78,9 +80,12 @@
             background-color: #f0fdf4;
         }
         
+        /* MODIFIED: Log Out button color refined */
         .btn-log-out {
             border: 1px solid var(--light-border);
             background-color: #f9fafb;
+            padding: 0.5rem 1rem;
+            border-radius: 0.5rem;
         }
 
         /* Modal Backdrop */
@@ -88,12 +93,26 @@
             background-color: rgba(0, 0, 0, 0.5);
             z-index: 50;
         }
+
+        /* Utility for Mobile-Only Overlay */
+        .sidebar-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: 30;
+        }
     </style>
 </head>
 <body class="h-screen overflow-hidden">
 
     <div id="doctor-dashboard-view" class="h-full flex flex-row">
-        <div class="sidebar flex flex-col justify-between py-6">
+        
+        <div id="sidebar-overlay" class="hidden md:hidden sidebar-overlay" onclick="toggleSidebar()"></div>
+
+        <div id="sidebar" class="sidebar fixed top-0 left-0 h-full flex-col justify-between py-6 transition-transform duration-300 transform -translate-x-full md:relative md:translate-x-0 md:flex">
             <div>
                 <div class="px-6 mb-10 flex items-center">
                     <img src="logo.png" alt="HIMS Logo" class="hims-logo-dashboard">
@@ -109,7 +128,7 @@
                         Patients
                     </a>
                     <a href="#" data-page="medical-records" class="nav-item flex items-center px-6 py-3 text-sm transition-colors duration-150">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 mr-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/><path d="M10 13H8"/><path d="M16 13h-2"/><path d="M16 17h-6"/></svg>
+                        <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 mr-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/><path d="M10 13h-2"/><path d="M16 13h-2"/><path d="M16 17h-6"/></svg>
                         Medical Records
                     </a>
                     <a href="#" data-page="appointments" class="nav-item flex items-center px-6 py-3 text-sm transition-colors duration-150">
@@ -123,17 +142,26 @@
                 </nav>
             </div>
 
-            <div class="px-6 pt-6 border-t border-gray-100 flex items-center">
-                <div class="h-8 w-8 rounded-full bg-green-200 flex items-center justify-center text-xs font-bold text-green-700 mr-3">CI</div>
-                <div class="leading-tight">
-                    <p class="text-sm font-medium">Dr. Cecilia Immergreen</p>
-                    <p class="text-xs text-gray-500">Pediatrician</p>
+            <div class="px-6 pt-6 border-t border-gray-100 space-y-4">
+                <div class="flex items-center">
+                    <div class="h-8 w-8 rounded-full bg-green-200 flex items-center justify-center text-xs font-bold text-green-700 mr-3">CI</div>
+                    <div class="leading-tight">
+                        <p class="text-sm font-medium">Dr. Cecilia Immergreen</p>
+                        <p class="text-xs text-gray-500">Pediatrician</p>
+                    </div>
                 </div>
+                <button onclick="doctorHandleSettingsAction('log-out')" class="btn-log-out w-full px-6 py-2 text-sm rounded-lg text-gray-700 hover:bg-gray-200 transition-colors flex items-center justify-center">
+                     <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 mr-2" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+                    Log Out
+                </button>
             </div>
         </div>
 
         <div class="flex-1 flex flex-col overflow-auto main-content bg-white">
-            <header class="header-bar p-4 md:p-6 shadow-sm">
+            <header class="header-bar p-4 md:p-6 shadow-sm flex items-center">
+                <button id="menu-toggle" class="md:hidden mr-4" onclick="toggleSidebar()">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6 text-gray-700" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
+                </button>
                 <h2 class="text-xl font-semibold">Dr. Cecilia Immergreen</h2>
             </header>
 
@@ -155,7 +183,7 @@
 
 
     <script type="text/javascript">
-        // --- Data (Renamed from Mock Data) ---
+        // --- Data ---
         const DOCTOR_DATA = {
             doctorName: 'Dr. Cecilia Immergreen',
             doctorRole: 'Pediatrician',
@@ -169,7 +197,7 @@
             consultationRecords: [
                 { id: '0000001-2025-002', date: '2025 May 21', time: '9:26 AM - 9:47 AM', patientId: '0000001', notes: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.', vitals: { temp: '37.1 C', hr: '67 bpm', bpSys: '110/70 mmHg', bpDias: '120/79 mmHg', weight: '69 kg', height: '167 cm' } },
                 { id: '0000001-2025-001', date: '2025 April 30', time: '9:15 AM - 9:33 AM', patientId: '0000001', notes: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.', vitals: {} },
-                { id: '0000001-2023-001', date: '2023 August 15', time: '9:30 AM - 9:57 AM', patientId: '0000001', notes: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.', vitals: {} },
+                { id: '0000001-2023-001', date: '2023 August 15', time: '9:30 AM - 9:57 AM', patientId: '0000001', notes: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ad commodo consequat.', vitals: {} },
                 { id: '0000001-2022-002', date: '2022 December 2', time: '9:26 AM - 9:46 AM', patientId: '0000001', notes: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.', vitals: {} }
             ],
             labResults: [
@@ -182,14 +210,41 @@
                 { patientId: '0000903', type: 'Follow-up Checkup', date: 'December 4, 2025' },
             ],
             currentDashboardPage: 'patients',
-            activePatientId: null // Stores the ID of the patient being viewed in Medical Records
+            activePatientId: null 
         };
+        
+        // --- Responsive UI Toggle Function ---
+
+        function toggleSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            const overlay = document.getElementById('sidebar-overlay');
+            const isOpen = sidebar.classList.contains('translate-x-0');
+
+            if (isOpen) {
+                // Close sidebar
+                sidebar.classList.remove('translate-x-0');
+                sidebar.classList.add('-translate-x-full');
+                overlay.classList.add('hidden');
+                document.body.classList.remove('overflow-hidden');
+            } else {
+                // Open sidebar
+                sidebar.classList.remove('-translate-x-full');
+                sidebar.classList.add('translate-x-0');
+                overlay.classList.remove('hidden');
+                document.body.classList.add('overflow-hidden');
+            }
+        }
+        
+        function closeSidebarOnMobile() {
+            if (window.innerWidth < 768) { 
+                toggleSidebar();
+            }
+        }
 
         // --- Utility Functions (Modal) ---
         function doctorShowModal(title, body, showConfirm = false, onConfirm = null) {
             document.getElementById('doctor-modal-title').textContent = title;
-            // Note: Keeping textContent for the main body for security/simplicity unless HTML tags are needed.
-            // However, the Emergency Contact view needs HTML tags (<br>), so we use innerHTML here.
+            // Using innerHTML to support <br> tags in the body text (like the Emergency Contact)
             document.getElementById('doctor-modal-body').innerHTML = body; 
             const confirmBtn = document.getElementById('doctor-modal-confirm-btn');
             
@@ -230,7 +285,8 @@
                 activeLink.classList.add('active-page');
             }
             
-            // Set the active patient ID if we're moving to the medical records view
+            closeSidebarOnMobile(); 
+            
             if (pageId === 'medical-records' && subView) {
                 DOCTOR_DATA.activePatientId = subView;
             } else if (pageId === 'patients') {
@@ -245,14 +301,13 @@
                     break;
                 case 'medical-records':
                     if (DOCTOR_DATA.activePatientId) {
-                         // Patient Name/ID is dynamically generated within the content function
                          content = generateMedicalRecordsContent(DOCTOR_DATA.activePatientId);
-                         title = 'Patient Information';
+                         title = 'Patient Information'; // Title is handled inside content for detailed view
                     } else {
-                        // If somehow we land here without an active patient, go back to the list
-                        content = generatePatientsListContent();
-                        title = 'Patient List';
-                        DOCTOR_DATA.currentDashboardPage = 'patients';
+                         // Fallback to patient list
+                         content = generatePatientsListContent();
+                         title = 'Patient List';
+                         DOCTOR_DATA.currentDashboardPage = 'patients';
                     }
                     break;
                 case 'appointments':
@@ -278,12 +333,12 @@
         
         function generatePatientsListContent() {
              const patientCards = DOCTOR_DATA.patients.map(p => `
-                 <div class="card p-4 mb-4 flex justify-between items-center">
-                     <div class="flex-1">
-                         <p class="text-base font-semibold">Patient ID: ${p.id}</p>
+                 <div class="card p-4 mb-4 flex flex-col sm:flex-row justify-between items-start sm:items-center">
+                     <div class="flex-1 mb-2 sm:mb-0">
+                         <p class="text-base font-semibold">Patient ID: ${p.id} - ${p.name}</p>
                          ${p.lastConsultation !== 'N/A' ? `<p class="text-sm text-gray-600">Last Consultation: ${p.lastConsultation}</p>` : `<p class="text-sm text-gray-500 italic">No recent consultation.</p>`}
                      </div>
-                     <button onclick="renderDoctorDashboardPage('medical-records', '${p.id}')" class="btn-action inline-flex items-center space-x-2 px-3 py-1">
+                     <button onclick="renderDoctorDashboardPage('medical-records', '${p.id}')" class="btn-action inline-flex items-center space-x-2 px-3 py-1 text-sm">
                          <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/><path d="M10 13h4"/><path d="M10 17h4"/><path d="M10 9h.01"/></svg>
                          <span>View Medical Record</span>
                      </button>
@@ -313,59 +368,60 @@
             
             if (!patient) return `<p class="text-red-500">Patient not found.</p>`;
             
-            // Check if we should display the detailed record view (mocking a click on "View Complete Medical Record")
+            // Show the detailed record view for Patient ID '0000001'
             const shouldShowDetailedRecord = patientId === '0000001' && DOCTOR_DATA.currentDashboardPage === 'medical-records';
             
             if (shouldShowDetailedRecord) {
-                 const latestRecord = records[0];
-                 const latestLab = lab.find(l => l.id === '0000001-2025-002-CBC01');
-                 
-                 return `
-                      <h2 class="text-xl font-semibold mb-6">Patient ID: ${patient.id}</h2>
-                      <h3 class="text-lg font-bold mb-4">Record ID: ${latestRecord.id}</h3>
-                      
-                      <div class="flex flex-col md:flex-row gap-4 mb-8">
-                          <div class="card p-6 flex-1">
-                              <p class="text-sm"><span class="font-medium">Consultation Date:</span> ${latestRecord.date}</p>
-                              <p class="text-sm mb-4"><span class="font-medium">Start Time:</span> ${latestRecord.time.split(' - ')[0]} | <span class="font-medium">End Time:</span> ${latestRecord.time.split(' - ')[1]}</p>
-                              <h4 class="text-base font-semibold mb-2">Clinician Notes:</h4>
-                              <p class="text-sm text-gray-700 leading-relaxed">${latestRecord.notes}</p>
-                          </div>
-                          
-                          <div class="card p-6 w-full md:w-1/3 space-y-2 text-sm">
-                              <h4 class="text-base font-semibold mb-2">Vital Signs</h4>
-                              <p><span class="font-medium">Temperature:</span> ${latestRecord.vitals.temp}</p>
-                              <p><span class="font-medium">Heart Rate:</span> ${latestRecord.vitals.hr}</p>
-                              <p><span class="font-medium">Systolic Blood Pressure:</span> ${latestRecord.vitals.bpSys}</p>
-                              <p><span class="font-medium">Diastolic Blood Pressure:</span> ${latestRecord.vitals.bpDias}</p>
-                              <p><span class="font-medium">Weight:</span> ${latestRecord.vitals.weight}</p>
-                              <p><span class="font-medium">Height:</span> ${latestRecord.vitals.height}</p>
-                          </div>
-                      </div>
-                      
-                      ${latestLab ? `
-                          <div class="card p-6">
-                              <h3 class="text-lg font-bold mb-4">Lab ID: ${latestLab.id}</h3>
-                              <p class="text-sm mb-1"><span class="font-medium">Test:</span> ${latestLab.test}</p>
-                              <p class="text-sm mb-3"><span class="font-medium">Result Date:</span> ${latestLab.date}</p>
-                              <div class="h-px bg-gray-200 my-4"></div>
-                              <p class="font-semibold mt-2 mb-2">Result:</p>
-                              <div class="text-sm text-gray-700 grid grid-cols-2 md:grid-cols-4 gap-2">
-                                  ${latestLab.result.split(', ').map(line => `<span>${line}</span>`).join('')}
-                              </div>
-                          </div>
-                      ` : '<p class="text-gray-500">No lab results associated with this record.</p>'}
-                      
-                      <button onclick="renderDoctorDashboardPage('patients')" class="mt-8 btn-action">
-                          <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 mr-1 inline-block" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
-                          Back to Patient List
-                      </button>
-                 `;
+                const latestRecord = records.length > 0 ? records[0] : { id: 'N/A', date: 'N/A', time: 'N/A', notes: 'No notes found.', vitals: {} };
+                const latestLab = lab.find(l => l.id === '0000001-2025-002-CBC01');
+                
+                // Content blocks stack vertically on mobile (flex-col) and become horizontal on desktop (md:flex-row)
+                return `
+                    <h1 class="text-2xl md:text-3xl font-semibold mb-6">Patient Records: ${patient.name} (${patient.id})</h1>
+                    <h3 class="text-lg font-bold mb-4">Latest Consultation: ${latestRecord.date}</h3>
+                    
+                    <div class="flex flex-col md:flex-row gap-4 mb-8">
+                        <div class="card p-6 flex-1">
+                            <p class="text-sm"><span class="font-medium">Record ID:</span> ${latestRecord.id}</p>
+                            <p class="text-sm mb-4"><span class="font-medium">Time:</span> ${latestRecord.time}</p>
+                            <h4 class="text-base font-semibold mb-2">Clinician Notes:</h4>
+                            <p class="text-sm text-gray-700 leading-relaxed">${latestRecord.notes}</p>
+                        </div>
+                        
+                        <div class="card p-6 w-full md:w-1/3 space-y-2 text-sm">
+                            <h4 class="text-base font-semibold mb-2">Vital Signs</h4>
+                            <p><span class="font-medium">Temperature:</span> ${latestRecord.vitals.temp || 'N/A'}</p>
+                            <p><span class="font-medium">Heart Rate:</span> ${latestRecord.vitals.hr || 'N/A'}</p>
+                            <p><span class="font-medium">Systolic Blood Pressure:</span> ${latestRecord.vitals.bpSys || 'N/A'}</p>
+                            <p><span class="font-medium">Diastolic Blood Pressure:</span> ${latestRecord.vitals.bpDias || 'N/A'}</p>
+                            <p><span class="font-medium">Weight:</span> ${latestRecord.vitals.weight || 'N/A'}</p>
+                            <p><span class="font-medium">Height:</span> ${latestRecord.vitals.height || 'N/A'}</p>
+                        </div>
+                    </div>
+                    
+                    ${latestLab ? `
+                        <div class="card p-6 mb-8">
+                            <h3 class="text-lg font-bold mb-4">Lab Results (Test: ${latestLab.test})</h3>
+                            <p class="text-sm mb-1"><span class="font-medium">Lab ID:</span> ${latestLab.id}</p>
+                            <p class="text-sm mb-3"><span class="font-medium">Result Date:</span> ${latestLab.date}</p>
+                            <div class="h-px bg-gray-200 my-4"></div>
+                            <p class="font-semibold mt-2 mb-2">Result Values:</p>
+                            <div class="text-sm text-gray-700 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2">
+                                ${latestLab.result.split(', ').map(line => `<span>${line}</span>`).join('')}
+                            </div>
+                        </div>
+                    ` : '<p class="text-gray-500">No lab results associated with this record.</p>'}
+                    
+                    <button onclick="renderDoctorDashboardPage('patients')" class="mt-4 btn-action inline-flex items-center text-sm">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 mr-1 inline-block" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+                        Back to Patient List
+                    </button>
+                `;
             }
             
             // --- Patient Demographic Card (Overview) ---
             const demographicCard = `
-                <h2 class="text-xl font-semibold mb-3">Patient Information</h2>
+                <h1 class="text-2xl md:text-3xl font-semibold mb-3">Patient Overview</h1>
                 <h3 class="text-lg font-semibold mb-4">${patient.name} (Patient ID: ${patient.id})</h3>
                 <div class="card p-6 mb-8 space-y-3 text-sm text-gray-700">
                     <p class="flex items-center"><svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 mr-2" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="4" rx="2"/><path d="M3 10h18"/><path d="M8 2v4"/><path d="M16 2v4"/><path d="M7 14h10"/></svg>
@@ -381,39 +437,39 @@
             
             // --- Consultation Records List (Overview) ---
             const consultationList = `
-                <div class="flex justify-between items-center mb-3">
-                    <h2 class="text-xl font-semibold">Consultation Records</h2>
-                    <button onclick="renderDoctorDashboardPage('medical-records', '0000001')" class="btn-action inline-flex items-center space-x-1 px-3 py-1 text-sm">
+                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-3">
+                    <h2 class="text-xl font-semibold mb-2 sm:mb-0">Consultation Records</h2>
+                    <button onclick="renderDoctorDashboardPage('medical-records', '${patient.id}')" class="btn-action inline-flex items-center space-x-1 px-3 py-1 text-sm">
                         <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/></svg>
-                        <span>View Complete Medical Record</span>
+                        <span>View All Records</span>
                     </button>
                 </div>
                 <div class="space-y-4">
                     ${records.map(r => `
                         <div class="card p-4">
-                            <div class="flex justify-between items-start text-sm font-medium mb-2">
+                            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center text-sm font-medium mb-2">
                                 <span class="text-base font-semibold">Record ID: ${r.id}</span>
-                                <span class="text-gray-600 text-xs">${r.time} | ${r.date}</span>
+                                <span class="text-gray-600 text-xs mt-1 sm:mt-0">${r.time} | ${r.date}</span>
                             </div>
                             <p class="text-gray-700 text-sm leading-relaxed">${r.notes.substring(0, 150)}...</p>
                         </div>
                     `).join('')}
                     
                     <div class="card p-4 space-y-1">
-                        <p class="text-sm"><span class="font-medium">Last Vaccination:</span> 2024 December 14</p>
+                        <h3 class="text-lg font-semibold mb-2">Vaccination Records (Mock)</h3>
+                        <p class="text-sm"><span class="font-medium">Last Vax Date:</span> 2024 December 14</p>
                         <p class="text-sm"><span class="font-medium">Vaccine Name:</span> holovax</p>
-                        <p class="text-sm"><span class="font-medium">Administered By:</span> Dr. Gigi Murin</p>
                     </div>
                 </div>
             `;
             
-            // If not viewing a specific record, show the patient overview
             return demographicCard + consultationList;
         }
 
         function generateDoctorAppointmentsContent() {
-            const todayAppointments = DOCTOR_DATA.appointments.filter(a => a.date.includes('December 2')); // Mocking 'Today'
-            const weekAppointments = DOCTOR_DATA.appointments.filter(a => !a.date.includes('December 2')); // Mocking 'This Week'
+            // Mocking logic assumes 'December 2, 2025' is today
+            const todayAppointments = DOCTOR_DATA.appointments.filter(a => a.date.includes('December 2')); 
+            const weekAppointments = DOCTOR_DATA.appointments.filter(a => !a.date.includes('December 2')); 
             
             const todayHtml = todayAppointments.length > 0 ? todayAppointments.map(a => generateAppointmentCard(a)).join('') : 
                 `<p class="text-gray-600 mb-6">You do not have any appointments scheduled today.</p>`;
@@ -436,20 +492,30 @@
         }
         
         function generateAppointmentCard(appt) {
+            const patient = DOCTOR_DATA.patients.find(p => p.id === appt.patientId);
+            const patientName = patient ? patient.name : 'Unknown Patient';
+
             return `
-                <div class="card p-4 mb-4">
-                    <p class="text-sm font-semibold">Patient ID: ${appt.patientId}</p>
-                    <p class="text-sm text-gray-700"><span class="font-medium">Appointment:</span> ${appt.type}</p>
-                    <p class="text-sm text-gray-700"><span class="font-medium">Date:</span> ${appt.date}</p>
+                <div class="card p-4 mb-4 flex flex-col sm:flex-row justify-between items-start sm:items-center">
+                    <div>
+                        <p class="text-base font-semibold">${patientName} (ID: ${appt.patientId})</p>
+                        <p class="text-sm text-gray-700"><span class="font-medium">Appointment:</span> ${appt.type}</p>
+                        <p class="text-sm text-gray-700"><span class="font-medium">Date:</span> ${appt.date}</p>
+                    </div>
+                    <button onclick="renderDoctorDashboardPage('medical-records', '${appt.patientId}')" class="btn-action inline-flex items-center space-x-1 px-3 py-1 text-xs mt-2 sm:mt-0">
+                         <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/></svg>
+                        View Record
+                    </button>
                 </div>
             `;
         }
 
         function generateDoctorSettingsContent() {
+            // Log Out button is now in the sidebar footer
             return `
                 <div class="card p-6 mb-8">
-                    <div class="flex justify-between items-center mb-4">
-                        <h2 class="text-lg font-semibold">Profile Information</h2>
+                    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4">
+                        <h2 class="text-lg font-semibold mb-2 sm:mb-0">Profile Information</h2>
                         <button onclick="doctorHandleSettingsAction('update-profile')" class="btn-action inline-flex items-center px-3 py-1 text-xs rounded-full border">
                             Update Profile
                         </button>
@@ -462,7 +528,7 @@
                     <div class="h-px bg-gray-200 my-4"></div>
                     <div class="space-y-2 text-sm">
                         <p><span class="font-medium">Email:</span> c.immergreen@hims.com</p>
-                        <p class="flex items-center"><span class="font-medium mr-2">Password:</span> ********** <button onclick="doctorHandleSettingsAction('change-password')" class="text-blue-500 hover:text-blue-600 ml-2">(Change Password)</button></p>
+                        <p class="flex flex-wrap items-center"><span class="font-medium mr-2">Password:</span> ********** <button onclick="doctorHandleSettingsAction('change-password')" class="text-blue-500 hover:text-blue-600 ml-2">(Change Password)</button></p>
                     </div>
                     <div class="h-px bg-gray-200 my-4"></div>
                     <div class="space-y-2 text-sm">
@@ -470,12 +536,6 @@
                         <p><span class="font-medium">Emergency Contact Person:</span> N/A</p>
                         <p><span class="font-medium">Emergency Contact:</span> N/A</p>
                     </div>
-                </div>
-                
-                <div class="flex justify-end">
-                    <button onclick="doctorHandleSettingsAction('log-out')" class="btn-log-out px-6 py-2 text-sm rounded-lg text-gray-700 transition-colors">
-                        Log Out
-                    </button>
                 </div>
             `;
         }
@@ -489,32 +549,26 @@
             switch (action) {
                 case 'update-profile':
                     title = 'Update Profile';
-                    // Removed '(Mock Action)'
                     body = 'A form to update your name and contact details would open here.';
                     break;
                 case 'change-password':
                     title = 'Change Password';
-                    // Removed '(Mock Action)'
                     body = 'A new window or form for password change would appear.';
                     break;
                 case 'log-out':
                     title = 'Confirm Log Out';
                     body = 'Are you sure you want to log out of the HIMS dashboard?';
                     showConfirm = true;
-                    // --- MODIFICATION: Redirect to index.html immediately upon confirmation ---
                     onConfirm = () => { 
                         window.location.href = 'index.html';
                     };
                     break;
             }
-            // Note: When calling doctorShowModal, the modal body text is handled by the switch statement
             doctorShowModal(title, body, showConfirm, onConfirm);
         }
 
-
         // --- Initialize the application on page load ---
         window.onload = function() {
-            // Set up navigation listeners for the Doctor Dashboard
             document.getElementById('nav-links-doctor').addEventListener('click', (e) => {
                 const target = e.target.closest('.nav-item');
                 if (target) {
