@@ -1,0 +1,667 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HIMS Nurse Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Shared Custom Styles */
+        :root {
+            --primary-green: #E6F7E8; /* Lightest green for headers/active states */
+            --dark-text: #2c3e50; /* Dark text/icon color */
+            --light-border: #d2d6dc; /* Light gray border for cards/inputs */
+            --nav-active-bg: #E6F7E8; 
+            --nav-active-text: #16a34a; /* Darker green for text/icon when active */
+            --btn-schedule-text: #16a34a;
+            --btn-schedule-border: #6ee7b7; 
+            --btn-cancel-bg: #fef2f2;
+            --btn-cancel-text: #ef4444;
+            --btn-unavailable-border: #fca5a5;
+            font-family: 'Inter', sans-serif;
+        }
+
+        body {
+            background-color: #f4f6f8;
+            color: var(--dark-text);
+        }
+
+        .card {
+            border: 1px solid var(--light-border);
+            border-radius: 12px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+            background-color: white;
+        }
+
+        /* Logo Style */
+        .hims-logo-dashboard {
+            width: 70px; 
+            height: auto;
+            margin-right: 8px; 
+            vertical-align: middle; 
+        }
+
+        .sidebar {
+            width: 280px;
+            background-color: white;
+            border-right: 1px solid var(--light-border);
+        }
+
+        .header-bar {
+            background-color: var(--primary-green);
+            border-bottom: 1px solid var(--light-border);
+        }
+        
+        .nav-item {
+            color: var(--dark-text);
+        }
+        .nav-item.active-page {
+            background-color: var(--nav-active-bg);
+            color: var(--nav-active-text);
+            font-weight: 600;
+            border-right: 3px solid var(--nav-active-text);
+        }
+        .nav-item:not(.active-page):hover {
+            background-color: #f7f7f7;
+        }
+        
+        /* Nurse/Staff Action Button Styles */
+        .btn-action {
+            background-color: white;
+            color: var(--btn-schedule-text);
+            border: 1px solid var(--btn-schedule-border);
+            transition: all 0.2s;
+            padding: 0.5rem 1rem;
+            border-radius: 9999px; /* Pill shape */
+            font-weight: 500;
+        }
+        .btn-action:hover {
+            background-color: #f0fdf4;
+        }
+        
+        .btn-log-out {
+            border: 1px solid var(--light-border);
+            background-color: #f9fafb;
+        }
+
+        /* Triage Specific Styles */
+        .triage-level-btn {
+            padding: 0.5rem 1.5rem;
+            border-radius: 9999px;
+            font-weight: 500;
+            border: 1px solid transparent;
+            width: 100%;
+            text-align: center;
+            transition: background-color 0.2s;
+        }
+        .triage-level-btn.selected {
+             font-weight: 600;
+             border: 2px solid var(--nav-active-text);
+        }
+        
+        /* Emergency (Red) */
+        .triage-level-btn.emergency {
+            background-color: #fef2f2;
+            color: #ef4444;
+            border-color: #fca5a5;
+        }
+        .triage-level-btn.emergency.selected {
+             background-color: #fca5a5;
+             color: white;
+        }
+
+        /* Priority (Yellow/Orange) */
+        .triage-level-btn.priority {
+            background-color: #fffbeb;
+            color: #f59e0b;
+            border-color: #fcd34d;
+        }
+        .triage-level-btn.priority.selected {
+             background-color: #fcd34d;
+             color: #6d3a01;
+        }
+
+        /* Non-Urgent (Green) */
+        .triage-level-btn.non-urgent {
+            background-color: var(--primary-green);
+            color: var(--nav-active-text);
+            border-color: #6ee7b7;
+        }
+        .triage-level-btn.non-urgent.selected {
+             background-color: #6ee7b7;
+             color: var(--dark-text);
+        }
+
+        /* Modal Backdrop */
+        .modal-backdrop {
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: 50;
+        }
+    </style>
+</head>
+<body class="h-screen overflow-hidden">
+
+    <div id="nurse-dashboard-view" class="h-full flex flex-row">
+        <div class="sidebar flex flex-col justify-between py-6">
+            <div>
+                <div class="px-6 mb-10 flex items-center">
+                    <img src="logo.png" alt="HIMS Logo" class="hims-logo-dashboard">
+                    <div class="leading-tight">
+                        <h1 class="text-2xl font-bold sr-only">HIMS</h1>
+                        <p class="text-xs text-gray-500">Healthcare Information Management System</p>
+                    </div>
+                </div>
+
+                <nav id="nav-links-nurse">
+                    <a href="#" data-page="triage" class="nav-item flex items-center px-6 py-3 text-sm transition-colors duration-150 active-page">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 mr-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 20H4a2 2 0 0 1-2-2V5c0-1.1.9-2 2-2h3.93a2 2 0 0 1 1.66.75L12 6l2.41-3.23a2 2 0 0 1 1.66-.77H20a2 2 0 0 1 2 2v13a2 2 0 0 1-2 2h-7"/><path d="M12 20h2v2h-2z"/><path d="M15 15h1"/><path d="M15 11h1"/><path d="M15 7h1"/></svg>
+                        Triage Records
+                    </a>
+                    <a href="#" data-page="update-records" class="nav-item flex items-center px-6 py-3 text-sm transition-colors duration-150">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 mr-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v20"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+                        Update Records
+                    </a>
+                    <a href="#" data-page="consultations" class="nav-item flex items-center px-6 py-3 text-sm transition-colors duration-150">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 mr-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/><path d="M10 13h4"/><path d="M10 17h4"/><path d="M10 9h.01"/></svg>
+                        Consultations
+                    </a>
+                    <a href="#" data-page="settings" class="nav-item flex items-center px-6 py-3 text-sm transition-colors duration-150">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 mr-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.22a2 2 0 0 1-1.41 1.41l-.22.22a2 2 0 0 0-2.42 1.39l-.49 1.34a2 2 0 0 0-1 1.58v.44a2 2 0 0 0 2 2v.22a2 2 0 0 1 1.41 1.41l.22.22a2 2 0 0 0 1.39 2.42l1.34.49a2 2 0 0 0 1.58 1h.44a2 2 0 0 0 2-2v-.22a2 2 0 0 1 1.41-1.41l.22-.22a2 2 0 0 0 2.42-1.39l.49-1.34a2 2 0 0 0 1-1.58v-.44a2 2 0 0 0-2-2v-.22a2 2 0 0 1-1.41-1.41l-.22-.22a2 2 0 0 0-1.39-2.42l-1.34-.49a2 2 0 0 0-1.58-1z"/><circle cx="12" cy="12" r="3"/></svg>
+                        Settings
+                    </a>
+                </nav>
+            </div>
+
+            <div class="px-6 pt-6 border-t border-gray-100 flex items-center">
+                <div class="h-8 w-8 rounded-full bg-green-200 flex items-center justify-center text-xs font-bold text-green-700 mr-3">NR</div>
+                <div class="leading-tight">
+                    <p class="text-sm font-medium">Nerissa Ravencroft</p>
+                    <p class="text-xs text-gray-500">Nurse</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="flex-1 flex flex-col overflow-auto main-content bg-white">
+            <header class="header-bar p-4 md:p-6 shadow-sm">
+                <h2 class="text-xl font-semibold">Nerissa Ravencroft</h2>
+            </header>
+
+            <main id="nurse-page-container" class="p-4 md:p-8 flex-1 overflow-y-auto">
+                </main>
+        </div>
+    </div>
+    
+    <div id="nurse-app-modal" class="fixed inset-0 hidden items-center justify-center modal-backdrop">
+        <div class="bg-white rounded-xl shadow-2xl w-full max-w-sm m-4 p-6 transform transition-all scale-100">
+            <h3 id="nurse-modal-title" class="text-lg font-semibold mb-3"></h3>
+            <p id="nurse-modal-body" class="text-gray-600 mb-6 text-sm"></p>
+            <div class="flex justify-end space-x-3">
+                <button onclick="nurseCloseModal()" class="px-4 py-2 text-sm rounded-lg bg-gray-100 text-gray-700 hover:bg-gray-200 transition-colors">Close</button>
+                <button id="nurse-modal-confirm-btn" class="hidden px-4 py-2 text-sm rounded-lg bg-red-600 text-white hover:bg-red-700 transition-colors">Confirm</button>
+            </div>
+        </div>
+    </div>
+
+
+    <script type="text/javascript">
+        // --- Data (Renamed from Mock Data) ---
+        const NURSE_DATA = {
+            nurseName: 'Nerissa Ravencroft',
+            nurseID: 'N230731',
+            nurseRole: 'Nurse',
+            patients: [
+                { id: '0000041', name: 'John Doe', lastConsultation: '2025 September 16', vitals: { temp: null, hr: null, bpSys: null, bpDias: null, weight: null, height: null } },
+                { id: '0000365', name: 'Jane Smith', lastConsultation: '2025 June 10', vitals: { temp: '36.8 C', hr: '72 bpm', bpSys: '115/75 mmHg', bpDias: '120/79 mmHg', weight: '70 kg', height: '170 cm' } },
+                { id: '0000001', name: 'Alice Johnson', lastConsultation: '2025 May 21', vitals: { temp: null, hr: null, bpSys: null, bpDias: null, weight: null, height: null } },
+                { id: '0000067', name: 'Robert Brown', lastConsultation: '2025 April 3', vitals: { temp: '37.0 C', hr: '65 bpm', bpSys: '125/80 mmHg', bpDias: '120/79 mmHg', weight: '85 kg', height: '180 cm' } },
+                { id: '0000023', name: 'Emily Davis', lastConsultation: 'N/A', vitals: { temp: null, hr: null, bpSys: null, bpDias: null, weight: null, height: null } }
+            ],
+            triageRecords: [
+                { triageId: '0000041-T2025-01', patientId: '0000041', triagedBy: '-- N/A --', nurseId: '-- N/A --', triageLevel: '-- N/A --', summary: null, completed: false },
+                { triageId: '0000365-T2025-01', patientId: '0000365', triagedBy: 'Nerissa Ravencroft', nurseId: 'N230731', triageLevel: 'Non-Urgent', summary: 'mild respiratory symptoms, including sore throat and cough.', completed: true },
+                { triageId: '0000001-T2025-01', patientId: '0000001', triagedBy: 'Yuzuki Choco', nurseId: 'N180905', triageLevel: 'Emergency', summary: 'Severe chest pain, difficulty breathing.', completed: true },
+                { triageId: '0000067-T2025-01', patientId: '0000067', triagedBy: 'Nerissa Ravencroft', nurseId: 'N230731', triageLevel: 'Priority', summary: 'Fractured wrist, moderate pain.', completed: true },
+                { triageId: '0000023-T2025-01', patientId: '0000023', triagedBy: 'Tokoyami Towa', nurseId: 'N220613', triageLevel: 'Non-Urgent', summary: 'Minor rash on arm.', completed: true },
+            ],
+            // Consultation records mimic the doctor's view structure, but access is read-only
+            consultationRecords: [
+                { id: '0000001-2025-002', date: '2025 May 21', time: '9:26 AM - 9:47 AM', patientId: '0000001', notes: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.', vitals: { temp: '37.1 C', hr: '67 bpm', bpSys: '110/70 mmHg', bpDias: '120/79 mmHg', weight: '69 kg', height: '167 cm' } },
+            ],
+            currentDashboardPage: 'triage',
+            activeTriageId: null 
+        };
+
+        // --- Utility Functions (Modal) ---
+        function nurseShowModal(title, body, showConfirm = false, onConfirm = null) {
+            document.getElementById('nurse-modal-title').textContent = title;
+            document.getElementById('nurse-modal-body').innerHTML = body; // Use innerHTML for <br>
+            const confirmBtn = document.getElementById('nurse-modal-confirm-btn');
+            
+            if (showConfirm && onConfirm) {
+                confirmBtn.classList.remove('hidden');
+                confirmBtn.onclick = () => { 
+                    onConfirm(); 
+                    nurseCloseModal(); 
+                };
+            } else {
+                confirmBtn.classList.add('hidden');
+                confirmBtn.onclick = null;
+            }
+
+            document.getElementById('nurse-app-modal').classList.remove('hidden');
+            document.getElementById('nurse-app-modal').classList.add('flex');
+        }
+
+        function nurseCloseModal() {
+            document.getElementById('nurse-app-modal').classList.remove('flex');
+            document.getElementById('nurse-app-modal').classList.add('hidden');
+        }
+
+        // --- Dashboard Rendering Logic ---
+
+        function renderNurseDashboardPage(pageId, subView = null) {
+            NURSE_DATA.currentDashboardPage = pageId;
+            const container = document.getElementById('nurse-page-container');
+            let content = '';
+            let title = '';
+
+            // Update active navigation link
+            document.querySelectorAll('#nav-links-nurse .nav-item').forEach(item => {
+                item.classList.remove('active-page');
+            });
+            const activeLink = document.querySelector(`#nav-links-nurse .nav-item[data-page="${pageId}"]`);
+            if (activeLink) {
+                activeLink.classList.add('active-page');
+            }
+            
+            // Handle sub-views (like Triage Detail or Patient Consultation)
+            NURSE_DATA.activeTriageId = null;
+            if (pageId === 'triage' && subView) {
+                 NURSE_DATA.activeTriageId = subView;
+            } 
+
+            switch (pageId) {
+                case 'triage':
+                    if (NURSE_DATA.activeTriageId) {
+                        content = generateTriageDetailContent(NURSE_DATA.activeTriageId);
+                        title = ''; // Title handled inside detail content
+                    } else {
+                        title = 'Triage List';
+                        content = generateTriageRecordsContent();
+                    }
+                    break;
+                case 'update-records':
+                    title = 'Patient List';
+                    content = generateUpdateRecordsListContent();
+                    break;
+                case 'consultations':
+                     if (subView) {
+                        content = generatePatientConsultationRecord(subView);
+                        title = 'Consultation Records';
+                    } else {
+                        title = 'Consultation Records';
+                        content = generateConsultationsListContent();
+                    }
+                    break;
+                case 'settings':
+                    title = 'Settings';
+                    content = generateNurseSettingsContent();
+                    break;
+                default:
+                    title = 'Welcome';
+                    content = '<p class="text-gray-600">Select a section from the sidebar.</p>';
+            }
+
+            container.innerHTML = `
+                <h1 class="text-2xl md:text-3xl font-semibold mb-6">${title}</h1>
+                ${content}
+            `;
+        }
+        
+        // --- Content Generators ---
+        
+        function getTriageLevelClass(level) {
+            switch (level) {
+                case 'Emergency': return 'emergency';
+                case 'Priority': return 'priority';
+                case 'Non-Urgent': return 'non-urgent';
+                default: return 'text-gray-500';
+            }
+        }
+        
+        function generateTriageRecordsContent() {
+            // Triage List View
+            
+            const triageCards = NURSE_DATA.triageRecords.map(t => {
+                const levelClass = getTriageLevelClass(t.triageLevel);
+                
+                return `
+                    <div class="card p-4 mb-4 flex justify-between items-center">
+                        <div class="flex-1">
+                            <p class="text-base font-semibold">Triage ID: ${t.triageId}</p>
+                            <p class="text-sm text-gray-600">Triaged by: ${t.triagedBy}</p>
+                            <p class="text-sm text-gray-600">Nurse ID: ${t.nurseId}</p>
+                        </div>
+                        <div class="flex flex-col items-end space-y-2">
+                             <p class="text-sm font-medium ${levelClass}">Triage Level: ${t.triageLevel}</p>
+                             <button onclick="renderNurseDashboardPage('triage', '${t.triageId}')" class="btn-action inline-flex items-center space-x-2 px-3 py-1 text-xs">
+                                 <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/><path d="M12 13v4"/><path d="M10 15h4"/></svg>
+                                 <span>${t.completed ? 'View Details' : 'Start Triage'}</span>
+                             </button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+
+            return `
+                <div class="flex justify-end mb-4">
+                    <p class="text-sm text-gray-500 flex items-center">
+                        Sort By: 
+                        <select class="ml-2 border border-gray-300 rounded-lg text-sm p-1">
+                            <option selected>Date</option>
+                            <option>Level</option>
+                        </select>
+                    </p>
+                </div>
+                <div class="space-y-4">
+                    ${triageCards}
+                </div>
+            `;
+        }
+
+        function generateTriageDetailContent(triageId) {
+            const triage = NURSE_DATA.triageRecords.find(t => t.triageId === triageId);
+            if (!triage) return `<p class="text-red-500">Triage Record not found.</p>`;
+
+            const patient = NURSE_DATA.patients.find(p => p.id === triage.patientId);
+            const isEditable = !triage.completed || triage.triagedBy === NURSE_DATA.nurseName;
+            
+            // Default active level for display/editing
+            const defaultLevel = triage.triageLevel === '-- N/A --' ? null : triage.triageLevel;
+            
+            // Format summary for display in the summary card (if completed)
+            const summaryDisplay = triage.summary ? 
+                `<ul>${triage.summary.split(', ').map(s => `<li>• ${s.trim()}</li>`).join('')}</ul>` 
+                : `<textarea id="triage-summary-input" rows="5" class="w-full p-3 border border-gray-300 rounded-lg" placeholder="Enter symptoms and a brief summary of the patient's condition..."></textarea>`;
+            
+            // Triage Detail View
+            return `
+                <h1 class="text-2xl md:text-3xl font-semibold mb-6">Triage ID: ${triage.triageId}</h1>
+                
+                <div class="card p-8 mb-8">
+                    <div class="space-y-2 text-base mb-6">
+                        <p><span class="font-medium">Triage ID:</span> ${triage.triageId}</p>
+                        <p><span class="font-medium">Patient:</span> ${patient.name} (ID: ${patient.id})</p>
+                        <p><span class="font-medium">Triaged by:</span> ${triage.triagedBy}</p>
+                        <p><span class="font-medium">Nurse ID:</span> ${triage.nurseId}</p>
+                    </div>
+
+                    <div class="mb-8">
+                        <h4 class="text-base font-semibold mb-3">Triage Level:</h4>
+                        <div id="triage-level-group" class="flex flex-col space-y-3 w-full max-w-xs mx-auto">
+                            <button data-level="Emergency" class="triage-level-btn emergency ${defaultLevel === 'Emergency' ? 'selected' : ''}">Emergency</button>
+                            <button data-level="Priority" class="triage-level-btn priority ${defaultLevel === 'Priority' ? 'selected' : ''}">Priority</button>
+                            <button data-level="Non-Urgent" class="triage-level-btn non-urgent ${defaultLevel === 'Non-Urgent' ? 'selected' : ''}">Non-Urgent</button>
+                        </div>
+                    </div>
+
+                    <div class="mb-6">
+                        <h4 class="text-base font-semibold mb-3">Summary:</h4>
+                        <div class="card p-4 bg-gray-50 border-gray-300">
+                             ${summaryDisplay}
+                        </div>
+                    </div>
+
+                    <div class="flex justify-center mt-8 space-x-4">
+                        <button onclick="handleTriageSubmit('${triageId}', ${triage.completed})" class="btn-action px-6 py-2">
+                            ${triage.completed ? 'Update' : 'Submit'}
+                        </button>
+                        <button onclick="renderNurseDashboardPage('triage')" class="btn-log-out px-6 py-2">
+                            Back
+                        </button>
+                    </div>
+                </div>
+            `;
+        }
+        
+        function handleTriageSubmit(triageId, isUpdate) {
+            const levelGroup = document.getElementById('triage-level-group');
+            const selectedButton = levelGroup.querySelector('.triage-level-btn.selected');
+            const selectedLevel = selectedButton ? selectedButton.getAttribute('data-level') : null;
+            
+            const summaryInput = document.getElementById('triage-summary-input');
+            const summary = summaryInput ? summaryInput.value.trim() : null;
+
+            if (!selectedLevel) {
+                 nurseShowModal('Validation Error', 'Please select a Triage Level before submitting.', false);
+                 return;
+            }
+
+            // Cleaned up message, removed 'Mock submission/update action'
+            const action = isUpdate ? 'Updated' : 'Submitted';
+            
+            // In a real application, you would send this data to the backend:
+            // { triageId, triageLevel: selectedLevel, summary }
+            
+            nurseShowModal('Triage Record Success', 
+                `Triage Record ${triageId} has been successfully ${action} with Level: <b>${selectedLevel}</b> and Summary: "${summary}".`, 
+                false
+            );
+            
+            // After submission, navigate back to the list
+            renderNurseDashboardPage('triage');
+        }
+
+        // Add event listener for dynamic triage button selection
+        document.addEventListener('click', (e) => {
+            if (e.target.classList.contains('triage-level-btn')) {
+                const group = e.target.parentElement;
+                if (group.id === 'triage-level-group') {
+                    group.querySelectorAll('.triage-level-btn').forEach(btn => btn.classList.remove('selected'));
+                    e.target.classList.add('selected');
+                }
+            }
+        });
+        
+        
+        function generateUpdateRecordsListContent() {
+            // Patient list for the "Update Records" view
+            const patientCards = NURSE_DATA.patients.map(p => `
+                <div class="card p-4 mb-4 flex justify-between items-center">
+                    <div class="flex-1">
+                        <p class="text-base font-semibold">Patient ID: ${p.id}</p>
+                        ${p.lastConsultation !== 'N/A' ? `<p class="text-sm text-gray-600">Last Consultation: ${p.lastConsultation}</p>` : `<p class="text-sm text-gray-500 italic">No recent consultation.</p>`}
+                    </div>
+                    <button onclick="handleVitalsUpdateForm('${p.id}')" class="btn-action inline-flex items-center space-x-2 px-3 py-1">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20a8 8 0 1 0 0-16 8 8 0 0 0 0 16z"/><path d="M12 12m-1 0a1 1 0 1 0 2 0 1 1 0 1 0-2 0m2-4h-2"/></svg>
+                        <span>Update Vitals</span>
+                    </button>
+                </div>
+            `).join('');
+
+            return `
+                <div class="flex justify-end mb-4">
+                    <p class="text-sm text-gray-500 flex items-center">
+                        Sort By: 
+                        <select class="ml-2 border border-gray-300 rounded-lg text-sm p-1">
+                            <option selected>Date</option>
+                            <option>ID</option>
+                        </select>
+                    </p>
+                </div>
+                <div class="space-y-4">
+                    ${patientCards}
+                </div>
+            `;
+        }
+
+        function handleVitalsUpdateForm(patientId) {
+            const patient = NURSE_DATA.patients.find(p => p.id === patientId);
+            
+            // Vitals Update Form (used in modal)
+            const vitalsForm = `
+                <h4 class="text-lg font-bold mb-4">Update Vitals for Patient ID: ${patientId} (${patient.name})</h4>
+                <div class="space-y-3">
+                    <label class="block"><span class="text-sm font-medium">Temperature (C):</span> <input type="text" id="vitals-temp" value="${patient.vitals.temp || ''}" class="p-2 border border-gray-300 rounded-lg text-sm w-full mt-1"></label>
+                    <label class="block"><span class="text-sm font-medium">Heart Rate (bpm):</span> <input type="text" id="vitals-hr" value="${patient.vitals.hr || ''}" class="p-2 border border-gray-300 rounded-lg text-sm w-full mt-1"></label>
+                    <label class="block"><span class="text-sm font-medium">BP (mmHg):</span> <input type="text" id="vitals-bp" placeholder="e.g., 120/80" value="${patient.vitals.bpSys || ''}" class="p-2 border border-gray-300 rounded-lg text-sm w-full mt-1"></label>
+                    <label class="block"><span class="text-sm font-medium">Weight (kg):</span> <input type="text" id="vitals-weight" value="${patient.vitals.weight || ''}" class="p-2 border border-gray-300 rounded-lg text-sm w-full mt-1"></label>
+                    <label class="block"><span class="text-sm font-medium">Height (cm):</span> <input type="text" id="vitals-height" value="${patient.vitals.height || ''}" class="p-2 border border-gray-300 rounded-lg text-sm w-full mt-1"></label>
+                </div>
+            `;
+
+            nurseShowModal('Vitals Record', vitalsForm, true, () => {
+                // Removed 'Mock update action' text
+                // In a real application, data submission would happen here.
+                nurseShowModal('Update Successful', `Vitals for Patient ID ${patientId} have been successfully updated.`, false);
+            });
+        }
+        
+        function generateConsultationsListContent() {
+             // Show all patients (similar to Update Records list, but leads to read-only record view)
+             const consultationCards = NURSE_DATA.patients.map(p => `
+                <div class="card p-4 mb-4 flex justify-between items-center">
+                    <div class="flex-1">
+                        <p class="text-base font-semibold">Patient ID: ${p.id} (${p.name})</p>
+                        ${p.lastConsultation !== 'N/A' ? `<p class="text-sm text-gray-600">Last Consultation: ${p.lastConsultation}</p>` : `<p class="text-sm text-gray-500 italic">No consultation history.</p>`}
+                    </div>
+                    <button onclick="renderNurseDashboardPage('consultations', '${p.id}')" class="btn-action inline-flex items-center space-x-2 px-3 py-1">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/></svg>
+                        <span>View Records</span>
+                    </button>
+                </div>
+             `).join('');
+
+            return `
+                <div class="flex justify-end mb-4">
+                    <p class="text-sm text-gray-500 flex items-center">
+                        Sort By: 
+                        <select class="ml-2 border border-gray-300 rounded-lg text-sm p-1">
+                            <option selected>Date</option>
+                            <option>Name</option>
+                        </select>
+                    </p>
+                </div>
+                <div class="space-y-4">
+                    ${consultationCards}
+                </div>
+            `;
+        }
+
+        function generatePatientConsultationRecord(patientId) {
+             const patient = NURSE_DATA.patients.find(p => p.id === patientId);
+             const latestRecord = NURSE_DATA.consultationRecords.find(r => r.patientId === patientId);
+             
+             if (!patient) return `<p class="text-red-500">Patient not found.</p>`;
+
+             const recordContent = latestRecord ? `
+                 <h3 class="text-lg font-bold mb-4">Latest Record: ${latestRecord.id}</h3>
+                 
+                 <div class="flex flex-col md:flex-row gap-4 mb-8">
+                     <div class="card p-6 flex-1">
+                         <p class="text-sm"><span class="font-medium">Consultation Date:</span> ${latestRecord.date}</p>
+                         <p class="text-sm mb-4"><span class="font-medium">Time:</span> ${latestRecord.time}</p>
+                         <h4 class="text-base font-semibold mb-2">Clinician Notes:</h4>
+                         <p class="text-sm text-gray-700 leading-relaxed">${latestRecord.notes}</p>
+                     </div>
+                     
+                     <div class="card p-6 w-full md:w-1/3 space-y-2 text-sm">
+                         <h4 class="text-base font-semibold mb-2">Vitals from Record</h4>
+                         <p><span class="font-medium">Temperature:</span> ${latestRecord.vitals.temp}</p>
+                         <p><span class="font-medium">Heart Rate:</span> ${latestRecord.vitals.hr}</p>
+                         <p><span class="font-medium">BP (Systolic):</span> ${latestRecord.vitals.bpSys}</p>
+                         <p><span class="font-medium">BP (Diastolic):</span> ${latestRecord.vitals.bpDias}</p>
+                         <p><span class="font-medium">Weight:</span> ${latestRecord.vitals.weight}</p>
+                         <p><span class="font-medium">Height:</span> ${latestRecord.vitals.height}</p>
+                     </div>
+                 </div>
+             ` : `<p class="text-gray-500 italic">No consultation records available for ${patient.name} (ID: ${patient.id}).</p>`;
+
+             return `
+                 <h1 class="text-2xl md:text-3xl font-semibold mb-6">${patient.name} (ID: ${patient.id})</h1>
+                 ${recordContent}
+
+                 <button onclick="renderNurseDashboardPage('consultations')" class="mt-4 btn-action">
+                     <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 mr-1 inline-block" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+                     Back to Consultation List
+                 </button>
+             `;
+        }
+
+
+        function generateNurseSettingsContent() {
+             return `
+                 <div class="card p-6 mb-8">
+                     <div class="flex justify-between items-center mb-4">
+                         <h2 class="text-lg font-semibold">Profile Information</h2>
+                         <button onclick="nurseHandleSettingsAction('update-profile')" class="btn-action inline-flex items-center px-3 py-1 text-xs rounded-full border">
+                             Update Profile
+                         </button>
+                     </div>
+                     <div class="space-y-2 text-sm">
+                         <p><span class="font-medium">Given Name:</span> Nerissa</p>
+                         <p><span class="font-medium">Surname:</span> Ravencroft</p>
+                         <p><span class="font-medium">Staff Role:</span> Nurse</p>
+                     </div>
+                     <div class="h-px bg-gray-200 my-4"></div>
+                     <div class="space-y-2 text-sm">
+                         <p><span class="font-medium">Email:</span> n.ravencroft@hims.com</p>
+                         <p class="flex items-center"><span class="font-medium mr-2">Password:</span> ********** <button onclick="nurseHandleSettingsAction('change-password')" class="text-blue-500 hover:text-blue-600 ml-2">(Change Password)</button></p>
+                     </div>
+                 </div>
+                 
+                 <div class="flex justify-end">
+                     <button onclick="nurseHandleSettingsAction('log-out')" class="btn-log-out px-6 py-2 text-sm rounded-lg text-gray-700 transition-colors">
+                         Log Out
+                     </button>
+                 </div>
+             `;
+        }
+        
+        function nurseHandleSettingsAction(action) {
+            let title = '';
+            let body = '';
+            let showConfirm = false;
+            let onConfirm = null;
+            
+            switch (action) {
+                case 'update-profile':
+                    title = 'Update Profile';
+                    // Removed '(Mock Action)'
+                    body = 'A form to update your name and contact details would open here.';
+                    break;
+                case 'change-password':
+                    title = 'Change Password';
+                    // Removed '(Mock Action)'
+                    body = 'A new window or form for password change would appear.';
+                    break;
+                case 'log-out':
+                    title = 'Confirm Log Out';
+                    body = 'Are you sure you want to log out of the HIMS dashboard?';
+                    showConfirm = true;
+                    // --- MODIFICATION: Redirect to index.html immediately upon confirmation ---
+                    onConfirm = () => { 
+                        window.location.href = 'index.html';
+                    };
+                    break;
+            }
+            nurseShowModal(title, body, showConfirm, onConfirm);
+        }
+
+        // --- Initialize the application on page load ---
+        window.onload = function() {
+            // Set up navigation listeners for the Nurse Dashboard
+            document.getElementById('nav-links-nurse').addEventListener('click', (e) => {
+                const target = e.target.closest('.nav-item');
+                if (target) {
+                    e.preventDefault();
+                    const pageId = target.getAttribute('data-page');
+                    renderNurseDashboardPage(pageId);
+                }
+            });
+            // Initial render of the default page (Triage Records List)
+            renderNurseDashboardPage(NURSE_DATA.currentDashboardPage);
+        };
+    </script>
+</body>
+</html>

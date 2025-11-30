@@ -1,0 +1,461 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HIMS Login and Register</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Custom styles based on mockups */
+        :root {
+            /* General Theme Colors */
+            --primary-green: #E6F7E8; /* Lightest green for headers/active states */
+            --dark-text: #2c3e50; /* Dark text/icon color */
+            --light-border: #d2d6dc; /* Light gray border for cards/inputs */
+            
+            /* Button Colors */
+            --btn-schedule-text: #16a34a;
+            --btn-schedule-border: #a7f3d0; 
+            
+            /* Fonts */
+            font-family: 'Inter', sans-serif;
+        }
+
+        body {
+            background-color: #f4f6f8;
+            color: var(--dark-text);
+        }
+
+        /* Generic shared styles */
+        .card {
+            border: 1px solid var(--light-border);
+            border-radius: 12px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+            background-color: white; 
+        }
+
+        /* Logo Style */
+        .hims-logo {
+            width: 120px; 
+            height: auto;
+            margin-bottom: 8px; 
+        }
+        
+        .hims-logo-small {
+            width: 70px; 
+            height: auto;
+            margin-right: 8px; 
+            display: inline-block;
+            vertical-align: middle; 
+        }
+
+        /* For Login/Register page inputs */
+        .auth-input {
+            background-color: #f0f4f7;
+            border: 1px solid var(--light-border);
+            border-radius: 8px;
+            padding: 0.75rem 1rem;
+            width: 100%;
+            transition: border-color 0.2s;
+        }
+        .auth-input:focus {
+             border-color: #6ee7b7; 
+             outline: none;
+        }
+        
+        /* General button style for landing/auth submit buttons */
+        .btn-submit {
+            background-color: var(--primary-green);
+            color: var(--btn-schedule-text); 
+            border: 1px solid var(--btn-schedule-border);
+            padding: 0.75rem 2rem;
+            border-radius: 9999px; 
+            font-weight: 600;
+            transition: all 0.2s;
+        }
+        .btn-submit:hover {
+            background-color: #d1fae5; 
+        }
+        
+        /* Specific button style for Staff Role Selection (matching the mockup buttons) */
+        .btn-role-select {
+            background-color: white;
+            color: var(--btn-schedule-text); 
+            border: 1px solid var(--btn-schedule-border);
+            padding: 0.75rem 2rem;
+            border-radius: 9999px;
+            font-weight: 600;
+            width: 100%;
+            text-align: left;
+            transition: all 0.2s;
+        }
+        .btn-role-select:hover {
+            background-color: #f0fdf4;
+            border-color: #34d399;
+        }
+
+        /* Modal Backdrop */
+        .modal-backdrop {
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: 50;
+        }
+    </style>
+</head>
+<body class="h-screen flex flex-col">
+
+    <div class="flex-1 flex flex-col items-center justify-center p-8">
+
+        <div id="landing-view" class="h-full flex flex-col items-center justify-center p-8">
+            <div class="text-center mb-10">
+                <div class="flex flex-col items-center justify-center">
+                    <img src="logo.png" alt="HIMS Logo" class="hims-logo">
+                    <h1 class="text-3xl font-bold sr-only">HIMS</h1> 
+                    <p class="text-sm text-gray-500">Healthcare Information Management System</p>
+                </div>
+            </div>
+
+            <div class="flex space-x-6">
+                <button onclick="goToAuth('Patients')" class="btn-role-select inline-flex items-center space-x-2 px-6">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                    <span>Patients</span>
+                </button>
+                <button onclick="goToAuth('Staff')" class="btn-role-select inline-flex items-center space-x-2 px-6">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 2a6 6 0 0 0 0 12"/><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><path d="M18.5 8a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5z"/></svg>
+                    <span>Staff</span>
+                </button>
+            </div>
+        </div>
+
+
+        <div id="auth-view" class="h-full hidden flex-col items-center justify-start pt-10 px-8 w-full">
+            <div class="flex flex-col items-start w-full max-w-4xl mb-10">
+                <div class="leading-tight text-left mr-12">
+                    <div class="flex items-center">
+                        <img src="logo.png" alt="HIMS Logo" class="hims-logo-small">
+                        <span class="text-xl font-bold sr-only" style="color: #004d40;">HIMS</span>
+                    </div>
+                    <p class="text-xs text-gray-500">Healthcare Information Management System</p>
+                    <p id="auth-role" class="text-sm font-semibold mt-4 text-green-700 flex items-center"></p>
+                </div>
+            </div>
+            
+            <div id="auth-content" class="flex flex-col w-full max-w-4xl">
+                </div>
+            
+            <p class="text-xs text-gray-500 absolute bottom-10 right-10 mt-8 text-right">*An account will be provided to you by the IT Department</p>
+        </div>
+
+    </div> 
+    
+    <div id="app-modal" class="fixed inset-0 hidden items-center justify-center modal-backdrop">
+        <div class="bg-white rounded-xl shadow-2xl w-full max-w-sm m-4 p-6 transform transition-all scale-100">
+            <h3 id="modal-title" class="text-lg font-semibold mb-3"></h3>
+            <p id="modal-body" class="text-gray-600 mb-6 text-sm"></p>
+            <div class="flex justify-end space-x-3">
+                <button onclick="closeModal()" class="px-4 py-2 text-sm rounded-lg bg-gray-100 text-gray-700 hover:bg-gray-200 transition-colors hidden" id="modal-close-btn">Close</button>
+                <button id="modal-confirm-btn" class="px-4 py-2 text-sm rounded-lg bg-green-600 text-white hover:bg-green-700 transition-colors">Okay</button>
+            </div>
+        </div>
+    </div>
+
+
+    <script type="text/javascript">
+        // --- Data ---
+        const DATA = {
+            currentRole: 'Patients', 
+            currentSubRole: null, 
+        };
+
+        // --- Configuration: Base Path for Local Testing ---
+        // This is a placeholder for your local directory structure.
+        const BASE_LOCAL_PATH = "file:///C:/Users/Kaye%20Ann%20Oquindo/Downloads/SAD-PROTOTYPE/";
+
+
+        // --- View Switching Logic ---
+
+        function renderView(viewId) {
+            const views = ['landing-view', 'auth-view'];
+            views.forEach(id => {
+                const element = document.getElementById(id);
+                if (element) {
+                    element.classList.add('hidden');
+                    element.classList.remove('flex'); 
+                }
+            });
+
+            const activeElement = document.getElementById(viewId);
+            if (activeElement) {
+                activeElement.classList.remove('hidden');
+                activeElement.classList.add('flex');
+            }
+        }
+
+        function updateRoleDisplay(role) {
+            const roleElement = document.getElementById('auth-role');
+            let iconPath = '';
+            
+            if (role === 'Patients') {
+                iconPath = '<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>';
+            } else if (role === 'Staff') {
+                 iconPath = '<path d="M10 2a6 6 0 0 0 0 12"/><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><path d="M18.5 8a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5z"/>';
+            } else if (role === 'Doctor') {
+                iconPath = '<path d="M19 14.4V19a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h10l6 6Z"/><path d="M15 13h-3v3"/><path d="m16 9-4 4"/>';
+            } else if (role === 'Nurse' || role === 'Admin') {
+                iconPath = '<path d="M10 2a6 6 0 0 0 0 12"/><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><path d="M18.5 8a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5z"/>';
+            }
+
+            if (roleElement) {
+                 roleElement.innerHTML = `
+                     <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 mr-1" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${iconPath}</svg>
+                     ${role}
+                 `;
+            }
+        }
+
+        function goToAuth(role) {
+            DATA.currentRole = role;
+            const authContent = document.getElementById('auth-content');
+            
+            if (role === 'Staff') {
+                authContent.innerHTML = generateStaffRoleSelection();
+                updateRoleDisplay('Staff');
+            } else {
+                authContent.innerHTML = generatePatientAuthForms();
+                updateRoleDisplay('Patients');
+            }
+            
+            renderView('auth-view');
+        }
+
+        function renderAuthForm(role) {
+            DATA.currentSubRole = role;
+            const authContent = document.getElementById('auth-content');
+            
+            authContent.innerHTML = generateStaffLoginForm(role);
+            updateRoleDisplay(role); // Now displays single role, e.g., 'Doctor'
+        }
+        
+        function generateStaffRoleSelection() {
+             return `
+                 <div class="flex flex-col space-y-4 w-full max-w-sm ml-40 mt-10">
+                     <button onclick="renderAuthForm('Doctor')" class="btn-role-select inline-flex items-center space-x-2 justify-start">
+                         <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 mr-2" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 14.4V19a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h10l6 6Z"/><path d="M15 13h-3v3"/><path d="m16 9-4 4"/></svg>
+                         <span>Doctor</span>
+                     </button>
+                     <button onclick="renderAuthForm('Nurse')" class="btn-role-select inline-flex items-center space-x-2 justify-start">
+                         <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 mr-2" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 2a6 6 0 0 0 0 12"/><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><path d="M18.5 8a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5z"/></svg>
+                         <span>Nurse</span>
+                     </button>
+                     <button onclick="renderAuthForm('Admin')" class="btn-role-select inline-flex items-center space-x-2 justify-start">
+                         <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 mr-2" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20a8 8 0 1 0 0-16 8 8 0 0 0 0 16z"/><path d="M12 12m-1 0a1 1 0 1 0 2 0 1 1 0 1 0-2 0m2-4h-2"/></svg>
+                         <span>Admin</span>
+                     </button>
+                     <button onclick="renderView('landing-view')" class="text-sm text-gray-500 mt-4 hover:text-gray-700 underline mx-auto block">Back to Landing</button>
+                 </div>
+             `;
+        }
+
+        function generateStaffLoginForm(role) {
+            let filename = `hims_${role.toLowerCase()}_dashboard.html`;
+            // Construct the full local file path for staff dashboards
+            let dashboardPath = BASE_LOCAL_PATH + filename; 
+
+            return `
+                <div class="flex w-full justify-start">
+                    <div class="card p-8 flex flex-col items-center w-full max-w-sm ml-40 mt-10">
+                        <h2 class="text-2xl font-bold mb-8 text-center">Staff Login</h2>
+                        <form onsubmit="handleStaffAuthSubmit(event, '${role}', '${dashboardPath}')" class="w-full">
+                            <div class="mb-6">
+                                <label for="staff-email" class="text-sm font-medium block mb-2">Email:</label>
+                                <input type="email" id="staff-email" class="auth-input" placeholder="Enter your email" required>
+                            </div>
+                            <div class="mb-4">
+                                <label for="staff-password" class="text-sm font-medium block mb-2">Password:</label>
+                                <div class="relative">
+                                    <input type="password" id="staff-password" class="auth-input pr-12 bg-gray-200" placeholder="" required>
+                                    <button type="button" onclick="togglePasswordVisibility('staff-password')" class="absolute inset-y-0 right-0 flex items-center px-3 text-gray-400 hover:text-gray-700">
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/></svg>
+                                    </button>
+                                </div>
+                            </div>
+                            <a href="#" class="text-xs text-gray-500 hover:text-gray-700 transition-colors block mb-8">Forgot Password</a>
+                            <div class="flex justify-center">
+                                <button type="submit" class="btn-submit">Submit</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+                <div class="mt-8 flex justify-start w-full max-w-4xl">
+                     <button onclick="goToAuth('Staff')" class="text-sm text-gray-500 hover:text-gray-700 underline block ml-40">Back to Role Selection</button>
+                </div>
+            `;
+        }
+        
+        function generatePatientAuthForms() {
+             let filename = 'hims_patient_dashboard.html';
+             let dashboardPath = BASE_LOCAL_PATH + filename; 
+
+             return `
+                 <div class="flex flex-col md:flex-row w-full space-y-8 md:space-y-0 md:space-x-12">
+                     <div class="card p-8 flex-1">
+                         <h2 class="text-2xl font-bold mb-8 text-center">Patient Login</h2>
+                         <form onsubmit="handleAuthSubmit(event, 'login', '${dashboardPath}')">
+                             <div class="mb-6">
+                                 <label for="login-email" class="text-sm font-medium block mb-2">Email:</label>
+                                 <input type="email" id="login-email" class="auth-input" placeholder="Enter your email" required>
+                             </div>
+                             <div class="mb-4">
+                                 <label for="login-password" class="text-sm font-medium block mb-2">Password:</label>
+                                 <div class="relative">
+                                     <input type="password" id="login-password" class="auth-input pr-12" placeholder="Enter your password" required>
+                                     <button type="button" onclick="togglePasswordVisibility('login-password')" class="absolute inset-y-0 right-0 flex items-center px-3 text-gray-400 hover:text-gray-700">
+                                         <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/></svg>
+                                     </button>
+                                 </div>
+                             </div>
+                             <a href="#" class="text-xs text-gray-500 hover:text-gray-700 transition-colors block mb-8">Forgot Password</a>
+                             <div class="flex justify-center">
+                                 <button type="submit" class="btn-submit">Submit</button>
+                             </div>
+                         </form>
+                     </div>
+
+                     <div class="card p-8 flex-1">
+                         <h2 class="text-2xl font-bold mb-8 text-center">Patient Register</h2>
+                         <form onsubmit="handleAuthSubmit(event, 'register', '${dashboardPath}')">
+                             <div class="mb-4">
+                                 <label for="register-name" class="text-sm font-medium block mb-2">Name:</label>
+                                 <input type="text" id="register-name" class="auth-input" placeholder="Your full name" required>
+                             </div>
+                             <div class="mb-4">
+                                 <label for="register-email" class="text-sm font-medium block mb-2">Email:</label>
+                                 <input type="email" id="register-email" class="auth-input" placeholder="Your email" required>
+                             </div>
+                             <div class="mb-4">
+                                 <label for="register-password" class="text-sm font-medium block mb-2">Password:</label>
+                                 <input type="password" id="register-password" class="auth-input" placeholder="Password" required>
+                             </div>
+                             <div class="mb-4">
+                                 <label for="register-confirm-password" class="text-sm font-medium block mb-2">Confirm Password:</label>
+                                 <input type="password" id="register-confirm-password" class="auth-input" placeholder="Confirm password" required>
+                                 <p class="text-xs text-gray-500 mt-2">Password must have 8 characters, a letter, a number, and a special character.</p>
+                             </div>
+                             <div class="flex justify-center mt-6">
+                                 <button type="submit" class="btn-submit">Submit</button>
+                             </div>
+                         </form>
+                     </div>
+                 </div>
+                 <button onclick="renderView('landing-view')" class="text-sm text-gray-500 mt-8 hover:text-gray-700 underline mx-auto block">Back to Landing</button>
+             `;
+        }
+
+        // --- Simulated File Opening Logic ---
+        function openDashboardInSameTab(path) {
+            // Replaces the current page with the dashboard page
+            window.location.href = path; 
+        }
+
+        function handleStaffAuthSubmit(e, role, dashboardPath) {
+            e.preventDefault();
+            
+            const email = document.getElementById('staff-email').value;
+            const password = document.getElementById('staff-password').value;
+
+            if (!email || !password) {
+                 showModal('Login Failed', 'Please enter both email and password.', false);
+                 return;
+            }
+
+            // Simplified bodyText - removed 'Mock'
+            const bodyText = `Welcome, ${role}. Login successful.`;
+            
+            showModal(
+                'Login Successful', 
+                bodyText, 
+                true, 
+                // Use the new function to open in the same tab
+                () => openDashboardInSameTab(dashboardPath)
+            );
+        }
+
+        function handleAuthSubmit(e, type, dashboardPath) {
+            e.preventDefault();
+            
+            if (type === 'login') {
+                const email = document.getElementById('login-email').value;
+                const password = document.getElementById('login-password').value;
+
+                if (!email || !password) {
+                    showModal('Login Failed', 'Please enter both email and password.', false);
+                    return;
+                }
+
+                // Simplified bodyText - removed 'Mock'
+                const bodyText = `Welcome, Patient. Login successful.`;
+
+                showModal(
+                    'Login Successful', 
+                    bodyText, 
+                    true, 
+                    // Use the new function to open in the same tab
+                    () => openDashboardInSameTab(dashboardPath)
+                );
+            } else if (type === 'register') {
+                const email = document.getElementById('register-email').value;
+                if (!email) {
+                    showModal('Registration Failed', 'Please enter an email address for registration.', false);
+                    return;
+                }
+
+                // Removed 'Mock Register'
+                showModal('Registration Complete', 'Thank you for registering. Please proceed to the Login section.', false);
+            }
+        }
+        
+        function togglePasswordVisibility(inputId) {
+            const input = document.getElementById(inputId);
+            if (input.type === "password") {
+                input.type = "text";
+            } else {
+                input.type = "password";
+            }
+        }
+
+        // Modified showModal to always use 'Okay' as the only button and handle confirmation through it.
+        function showModal(title, body, showConfirm = false, onConfirm = null) {
+            document.getElementById('modal-title').textContent = title;
+            document.getElementById('modal-body').innerHTML = body;
+            const confirmBtn = document.getElementById('modal-confirm-btn');
+            
+            confirmBtn.textContent = 'Okay';
+
+            // Reset modal button styles (set back to green default for success/ok)
+            confirmBtn.classList.remove('hidden', 'bg-red-600', 'hover:bg-red-700', 'bg-gray-400', 'hover:bg-gray-500');
+            confirmBtn.classList.add('bg-green-600', 'hover:bg-green-700');
+            document.getElementById('modal-close-btn').classList.add('hidden'); 
+
+            if (showConfirm && onConfirm) {
+                // If showConfirm is true (for successful logins), the 'Okay' button executes the onConfirm function (which opens the dashboard)
+                confirmBtn.onclick = () => { 
+                    onConfirm(); 
+                    closeModal(); // Closing modal right before redirecting
+                };
+            } else {
+                // For regular messages (errors, registration success), 'Okay' just closes the modal
+                confirmBtn.onclick = closeModal;
+            }
+
+            document.getElementById('app-modal').classList.remove('hidden');
+            document.getElementById('app-modal').classList.add('flex');
+        }
+
+        function closeModal() {
+            document.getElementById('app-modal').classList.remove('flex');
+            document.getElementById('app-modal').classList.add('hidden');
+        }
+
+        window.onload = () => renderView('landing-view');
+    </script>
+</body>
+</html>

@@ -1,0 +1,619 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HIMS Patient Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Custom styles based on mockups */
+        :root {
+            /* General Theme Colors */
+            --primary-green: #E6F7E8; /* Lightest green for headers/active states */
+            --dark-text: #2c3e50; /* Dark text/icon color */
+            --light-border: #d2d6dc; /* Light gray border for cards/inputs */
+            
+            /* Active Navigation Colors (Matches the specific light green shade in the mockups) */
+            --nav-active-bg: #E6F7E8; 
+            --nav-active-text: #16a34a; /* Darker green for text/icon when active */
+            
+            /* Button Colors */
+            --btn-schedule-text: #16a34a;
+            --btn-schedule-border: #6ee7b7; /* Emerald-300 for submit button border */
+            --btn-cancel-bg: #fef2f2; /* Red-50 */
+            --btn-cancel-text: #ef4444; /* Red-500 */
+            --btn-unavailable-bg: #fef2f2;
+            --btn-unavailable-border: #fca5a5;
+            
+            /* Fonts */
+            font-family: 'Inter', sans-serif;
+        }
+
+        body {
+            background-color: #f4f6f8;
+            color: var(--dark-text);
+        }
+
+        /* Generic shared styles */
+        .card {
+            border: 1px solid var(--light-border);
+            border-radius: 12px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+        }
+        
+        /* Styles for the new image logo in the sidebar */
+        .hims-logo-dashboard {
+            width: 70px; /* Adjusted size to fit well in the sidebar header */
+            height: auto;
+            margin-right: 8px; 
+            vertical-align: middle; 
+        }
+
+        /* Dashboard specific styles */
+        .sidebar {
+            width: 280px;
+            background-color: white;
+            border-right: 1px solid var(--light-border);
+        }
+
+        .header-bar {
+            background-color: var(--primary-green);
+            border-bottom: 1px solid var(--light-border);
+        }
+        
+        /* Navigation Item Styling */
+        .nav-item {
+            color: var(--dark-text);
+        }
+        .nav-item.active-page {
+            background-color: var(--nav-active-bg);
+            color: var(--nav-active-text);
+            font-weight: 600;
+            border-right: 3px solid var(--nav-active-text);
+        }
+        .nav-item:not(.active-page):hover {
+            background-color: #f7f7f7;
+        }
+
+        /* Button Styling to match mockups */
+        .btn-schedule {
+            background-color: white;
+            color: var(--btn-schedule-text);
+            border: 1px solid var(--btn-schedule-border);
+            padding: 0.5rem 1rem;
+            border-radius: 9999px; /* Pill shape */
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+
+        .btn-schedule:hover {
+            background-color: #f0fdf4; /* Tailwind green-50 */
+        }
+
+        .btn-cancel {
+            background-color: var(--btn-cancel-bg);
+            color: var(--btn-cancel-text);
+            border: 1px solid var(--btn-unavailable-border); 
+            padding: 0.5rem 1rem;
+            border-radius: 9999px;
+            font-weight: 500;
+        }
+
+        .btn-cancel:hover {
+            background-color: #fee2e2; /* Tailwind red-100 */
+        }
+        
+        .badge-scheduled {
+            display: inline-flex;
+            align-items: center;
+            padding: 0.5rem 1rem;
+            border-radius: 9999px;
+            font-weight: 500;
+            background-color: var(--primary-green);
+            color: var(--btn-schedule-text);
+            border: 1px solid var(--btn-schedule-border);
+        }
+
+        .badge-unavailable {
+            display: inline-flex;
+            align-items: center;
+            padding: 0.5rem 1rem;
+            border-radius: 9999px;
+            font-weight: 500;
+            background-color: var(--btn-cancel-bg);
+            color: var(--btn-cancel-text);
+            border: 1px solid var(--btn-unavailable-border);
+        }
+
+        /* Modal Backdrop */
+        .modal-backdrop {
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: 50;
+        }
+
+    </style>
+</head>
+<body class="h-screen overflow-hidden">
+
+    <div id="dashboard-view" class="h-full flex flex-row">
+        <div class="sidebar flex flex-col justify-between py-6">
+            <div>
+                <div class="px-6 mb-10 flex items-center">
+                    <img src="logo.png" alt="HIMS Logo" class="hims-logo-dashboard">
+                    <div class="leading-tight">
+                        <h1 class="text-2xl font-bold sr-only">HIMS</h1>
+                        <p class="text-xs text-gray-500">Healthcare Information Management System</p>
+                    </div>
+                </div>
+
+                <nav id="nav-links">
+                    <a href="#" data-page="appointments" class="nav-item flex items-center px-6 py-3 text-sm transition-colors duration-150 active-page">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 mr-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 2v4"/><path d="M16 2v4"/><rect width="18" height="18" x="3" y="4" rx="2"/><path d="M3 10h18"/><path d="M8 14h.01"/><path d="M12 14h.01"/><path d="M16 14h.01"/><path d="M8 18h.01"/><path d="M12 18h.01"/><path d="M16 18h.01"/></svg>
+                        Appointments
+                    </a>
+                    <a href="#" data-page="lab-results" class="nav-item flex items-center px-6 py-3 text-sm transition-colors duration-150">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 mr-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.76l1.54-9C23.55 9.29 22.84 8 21.57 8H14"/></svg>
+                        Lab Results
+                    </a>
+                    <a href="#" data-page="records" class="nav-item flex items-center px-6 py-3 text-sm transition-colors duration-150">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 mr-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/><path d="M8 15h2"/><path d="M8 19h8"/><path d="M8 11h8"/></svg>
+                        Records
+                    </a>
+                    <a href="#" data-page="settings" class="nav-item flex items-center px-6 py-3 text-sm transition-colors duration-150">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 mr-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.22a2 2 0 0 1-1.41 1.41l-.22.22a2 2 0 0 0-2.42 1.39l-.49 1.34a2 2 0 0 0-1 1.58v.44a2 2 0 0 0 2 2v.22a2 2 0 0 1 1.41 1.41l.22.22a2 2 0 0 0 1.39 2.42l1.34.49a2 2 0 0 0 1.58 1h.44a2 2 0 0 0 2-2v-.22a2 2 0 0 1 1.41-1.41l.22-.22a2 2 0 0 0 2.42-1.39l.49-1.34a2 2 0 0 0 1-1.58v-.44a2 2 0 0 0-2-2v-.22a2 2 0 0 1-1.41-1.41l-.22-.22a2 2 0 0 0-1.39-2.42l-1.34-.49a2 2 0 0 0-1.58-1z"/><circle cx="12" cy="12" r="3"/></svg>
+                        Settings
+                    </a>
+                </nav>
+            </div>
+
+            <div class="px-6 pt-6 border-t border-gray-100 flex items-center">
+                <div class="h-8 w-8 rounded-full bg-green-200 flex items-center justify-center text-xs font-bold text-green-700 mr-3">ERB</div>
+                <p class="text-sm font-medium">Elizabeth Rose Bloodflame</p>
+            </div>
+        </div>
+
+        <div class="flex-1 flex flex-col overflow-auto main-content bg-white">
+            <header class="header-bar p-4 md:p-6 shadow-sm">
+                <h2 class="text-xl font-semibold">Elizabeth Rose Bloodflame</h2>
+            </header>
+
+            <main id="page-container" class="p-4 md:p-8 flex-1 overflow-y-auto">
+                </main>
+        </div>
+    </div>
+    
+    <div id="app-modal" class="fixed inset-0 hidden items-center justify-center modal-backdrop">
+        <div class="bg-white rounded-xl shadow-2xl w-full max-w-sm m-4 p-6 transform transition-all scale-100">
+            <h3 id="modal-title" class="text-lg font-semibold mb-3"></h3>
+            <p id="modal-body" class="text-gray-600 mb-6 text-sm"></p>
+            <div class="flex justify-end space-x-3">
+                <button onclick="closeModal()" class="px-4 py-2 text-sm rounded-lg bg-gray-100 text-gray-700 hover:bg-gray-200 transition-colors">Close</button>
+                <button id="modal-confirm-btn" class="hidden px-4 py-2 text-sm rounded-lg bg-red-600 text-white hover:bg-red-700 transition-colors">Confirm</button>
+            </div>
+        </div>
+    </div>
+
+
+    <script type="text/javascript">
+        // --- Data (Renamed from Mock Data) ---
+        const DATA = {
+            appointments: [
+                { id: 1, name: 'Dr. Gigi Murin', specialty: 'Physician', date: 'December 21, 2025', status: 'Scheduled' },
+                { id: 2, name: 'Dr. Cecilia Immergreen', specialty: 'Pediatrician', date: 'September 21, 2026', status: 'Available' },
+                { id: 3, name: 'Dr. Raora Panthera', specialty: 'Ophthalmologist', date: 'N/A', status: 'Unavailable' },
+                { id: 4, name: 'Dr. John Doe', specialty: 'Dermatologist', date: 'N/A', status: 'Scheduled' }, // Another scheduled to test the logic
+            ],
+            labResults: [
+                { id: '0000425-2025-003-U01', test: 'Urinalysis', date: 'December 2, 2025', status: 'Not released', result: null },
+                { id: '0000425-2025-002-CBC01', test: 'Complete Blood Count', date: 'May 22, 2025', status: 'Released', result: 'WBC: 6,700/mm3, HGB: 15.5 g/dL, RBC: 4.7 million/mm3, HCT: 45%, Platelets: 200,000/mm3' },
+            ],
+            records: {
+                notes: [
+                    { id: '0000425-2025-003', time: '9:26 AM - 9:47 AM', date: '2025 December 1', content: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.' },
+                    { id: '0000425-2025-002', time: '9:32 AM - 9:50 AM', date: '2025 May 22', content: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.' },
+                ],
+                vaccinations: [
+                    { date: '2025 April 26', name: 'Flu Vaccine', administered: 'Dr. Gigi Murin' },
+                    { date: '2024 December 14', name: 'holoVax', administered: 'System Record' },
+                ]
+            },
+            settings: {
+                givenName: 'Elizabeth Rose',
+                surname: 'Bloodflame',
+                contactNumber: '09987654321',
+                email: 'erb-holoen@gmail.com',
+                dateOfBirth: 'April 25, 2000',
+                emergencyContact: 'Nerissa Ravencroft',
+                emergencyNumber: '09564789123'
+            },
+            currentDashboardPage: 'appointments' // Tracks the active dashboard link
+        };
+
+        // --- Dashboard UI State and Functions ---
+
+        /**
+         * Renders the content for the current dashboard page.
+         * @param {string} pageId - The ID of the page to render (e.g., 'appointments').
+         */
+        function renderDashboardPage(pageId) {
+            DATA.currentDashboardPage = pageId;
+            const container = document.getElementById('page-container');
+            let content = '';
+            let title = '';
+
+            // Update active navigation link
+            document.querySelectorAll('.nav-item').forEach(item => {
+                item.classList.remove('active-page');
+            });
+            const activeLink = document.querySelector(`.nav-item[data-page="${pageId}"]`);
+            if (activeLink) {
+                activeLink.classList.add('active-page');
+            }
+
+            switch (pageId) {
+                case 'appointments':
+                    title = 'Appointment';
+                    content = generateAppointmentsContent();
+                    break;
+                case 'lab-results':
+                    title = 'Lab Results';
+                    content = generateLabResultsContent();
+                    break;
+                case 'records':
+                    title = 'Records';
+                    content = generateRecordsContent();
+                    break;
+                case 'settings':
+                    title = 'Settings';
+                    content = generateSettingsContent();
+                    break;
+                default:
+                    title = 'Welcome';
+                    content = '<p class="text-gray-600">Please select a section from the sidebar.</p>';
+            }
+
+            container.innerHTML = `
+                <h1 class="text-2xl md:text-3xl font-bold mb-6">${title}</h1>
+                ${content}
+            `;
+        }
+
+        /**
+         * Sets up event listeners for navigation and dynamic buttons.
+         */
+        function setupListeners() {
+            // Add listener for Dashboard navigation links
+            document.getElementById('nav-links').addEventListener('click', (e) => {
+                const target = e.target.closest('.nav-item');
+                if (target) {
+                    e.preventDefault();
+                    const pageId = target.getAttribute('data-page');
+                    renderDashboardPage(pageId);
+                }
+            });
+
+            // Initial render: Show the dashboard (this file IS the dashboard)
+            renderDashboardPage(DATA.currentDashboardPage);
+        }
+
+        // --- Modal Functions ---
+
+        /**
+         * Helper function to show the custom modal.
+         */
+        function showModal(title, body, showConfirm = false, onConfirm = null) {
+            document.getElementById('modal-title').textContent = title;
+            document.getElementById('modal-body').textContent = body;
+            const confirmBtn = document.getElementById('modal-confirm-btn');
+            
+            if (showConfirm && onConfirm) {
+                confirmBtn.classList.remove('hidden');
+                confirmBtn.onclick = () => { 
+                    onConfirm(); 
+                    closeModal(); 
+                };
+            } else {
+                confirmBtn.classList.add('hidden');
+                confirmBtn.onclick = null;
+            }
+
+            document.getElementById('app-modal').classList.remove('hidden');
+            document.getElementById('app-modal').classList.add('flex');
+        }
+
+        /**
+         * Closes the custom modal.
+         */
+        function closeModal() {
+            document.getElementById('app-modal').classList.remove('flex');
+            document.getElementById('app-modal').classList.add('hidden');
+        }
+
+        // --- Page Content Generators ---
+
+        function generateAppointmentsContent() {
+            // Find the NEXT scheduled appointment to treat as the main one
+            const scheduledAppt = DATA.appointments.find(a => a.status === 'Scheduled');
+            
+            let initialMessage = '';
+            let dateInputs = '';
+
+            const monthsOptions = `
+                <option value="January">January</option>
+                <option value="February">February</option>
+                <option value="March">March</option>
+                <option value="April">April</option>
+                <option value="May">May</option>
+                <option value="June">June</option>
+                <option value="July">July</option>
+                <option value="August">August</option>
+                <option value="September" ${!scheduledAppt ? 'selected' : ''}>September</option>
+                <option value="October">October</option>
+                <option value="November">November</option>
+                <option value="December" ${scheduledAppt ? 'selected' : ''}>December</option>
+            `;
+
+            if (scheduledAppt) {
+                // If there's a scheduled appointment, use date from data
+                initialMessage = ``;
+                dateInputs = `
+                    <div class="mb-6 flex space-x-4 items-center">
+                        <label class="text-sm font-medium text-gray-700">Month:</label>
+                        <select class="p-2 border border-gray-300 rounded-lg text-sm w-32">
+                            ${monthsOptions}
+                        </select>
+                        <label class="text-sm font-medium text-gray-700">Day:</label>
+                        <input type="text" value="21" class="p-2 border border-gray-300 rounded-lg text-sm w-16 text-center">
+                    </div>
+                `;
+            } else {
+                // If no scheduled appointment
+                initialMessage = `<p class="text-gray-600 mb-6">You do not have any appointments. Schedule one below.</p>`;
+                dateInputs = `
+                    <div class="mb-6 flex space-x-4 items-center">
+                        <label class="text-sm font-medium text-gray-700">Month:</label>
+                        <select class="p-2 border border-gray-300 rounded-lg text-sm w-32">
+                            ${monthsOptions}
+                        </select>
+                        <label class="text-sm font-medium text-gray-700">Day:</label>
+                        <input type="text" value="21" class="p-2 border border-gray-300 rounded-lg text-sm w-16 text-center">
+                    </div>
+                `;
+            }
+
+            // Generate the cards for all doctors
+            const doctorCardsHtml = DATA.appointments.map(app => {
+                let actionButtons;
+                let statusBadge = '';
+                const isMainScheduled = scheduledAppt && app.id === scheduledAppt.id;
+
+                switch (app.status) {
+                    case 'Scheduled':
+                        if (isMainScheduled) {
+                            // Main scheduled appointment styling (with Cancel/Reschedule buttons)
+                            statusBadge = `<span class="text-sm font-semibold text-gray-600">Date: ${app.date}</span>`;
+                            actionButtons = `
+                                <div class="flex space-x-4">
+                                    <button onclick="handleAppointmentAction('cancel', ${app.id}, '${app.name}')" class="btn-cancel inline-flex items-center text-sm">
+                                        Cancel Appointment
+                                    </button>
+                                    <button onclick="handleAppointmentAction('reschedule', ${app.id}, '${app.name}')" class="btn-schedule inline-flex items-center text-sm">
+                                        Reschedule
+                                    </button>
+                                </div>
+                            `;
+                        } else {
+                            // Other scheduled appointments in the list below (as a badge)
+                            actionButtons = `<span class="badge-scheduled">Scheduled</span>`;
+                        }
+                        break;
+                    case 'Available':
+                        actionButtons = `
+                            <button onclick="handleAppointmentAction('schedule', ${app.id}, '${app.name}')" class="btn-schedule inline-flex items-center text-sm">
+                                Schedule an appointment
+                            </button>
+                        `;
+                        break;
+                    case 'Unavailable':
+                        actionButtons = `
+                            <span class="badge-unavailable">
+                                Unavailable
+                            </span>
+                        `;
+                        break;
+                    default:
+                        actionButtons = '';
+                }
+
+                return `
+                    <div id="card-${app.id}" class="card p-6 mb-4 ${isMainScheduled ? 'main-scheduled-card' : ''}">
+                        <div class="flex justify-between items-start mb-2">
+                            <div>
+                                <h3 class="text-lg font-bold">${app.name}</h3>
+                                <p class="text-gray-500 text-sm">${app.specialty}</p>
+                            </div>
+                            ${isMainScheduled ? statusBadge : ''}
+                        </div>
+                        
+                        <div class="mt-4">
+                            ${actionButtons}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+            
+            // Separate the main scheduled card (if it exists) from the list below
+            const mainCard = scheduledAppt ? `<div class="space-y-4 mb-8">${document.createElement('div').innerHTML = doctorCardsHtml.match(/<div[^>]*id="card-\d+"[^>]*main-scheduled-card[^>]*>.*?<\/div>/s)[0]}</div>` : '';
+            const otherCards = scheduledAppt ? doctorCardsHtml.replace(mainCard.trim(), '').replace(/<div[^>]*id="card-\d+"[^>]*main-scheduled-card[^>]*>.*?<\/div>/gs, '').replace(/(\s*)\n\s*/g, '') : doctorCardsHtml;
+
+            return `
+                ${scheduledAppt ? `<h2 class="text-xl font-semibold mb-3">Appointment</h2>` : initialMessage}
+                
+                ${scheduledAppt ? mainCard : ''}
+                ${dateInputs}
+
+                <div class="space-y-4 mt-6">
+                    ${scheduledAppt ? otherCards : doctorCardsHtml}
+                </div>
+            `;
+        }
+
+
+        function handleAppointmentAction(action, id, doctorName) {
+            let title = '';
+            let body = '';
+            let showConfirm = false;
+            let onConfirm = null;
+
+            switch (action) {
+                case 'cancel':
+                    title = 'Confirm Cancellation';
+                    body = `Are you sure you want to cancel your appointment with ${doctorName} on December 21, 2025?`;
+                    showConfirm = true;
+                    onConfirm = () => showModal('Success', `The appointment with ${doctorName} has been cancelled.`, false);
+                    break;
+                case 'reschedule':
+                    title = 'Reschedule Appointment';
+                    body = `Rescheduling UI would appear here. Select a new date for ${doctorName}.`;
+                    break;
+                case 'schedule':
+                    title = 'Schedule Appointment';
+                    body = `You have successfully scheduled an appointment with ${doctorName}.`;
+                    break;
+            }
+
+            showModal(title, body, showConfirm, onConfirm);
+        }
+
+
+        function generateLabResultsContent() {
+            const resultList = DATA.labResults.map(result => {
+                const resultContent = result.result 
+                    ? `<p class="font-semibold mt-2 mb-2">Result:</p>
+                        <div class="text-sm text-gray-700 grid grid-cols-2 md:grid-cols-4 gap-2">
+                            ${result.result.split(', ').map(line => `<span>${line}</span>`).join('')}
+                        </div>`
+                    : `<p class="font-semibold text-gray-500 mt-2 mb-2">Result:</p>
+                        <p class="text-red-500 font-medium text-sm">-- Not yet released --</p>`;
+
+                return `
+                    <div class="card p-6 mb-4">
+                        <p class="text-sm mb-1"><span class="font-medium">Lab ID:</span> ${result.id}</p>
+                        <p class="text-sm mb-1"><span class="font-medium">Test:</span> ${result.test}</p>
+                        <p class="text-sm mb-3"><span class="font-medium">Result Date:</span> ${result.date}</p>
+                        <div class="h-px bg-gray-200 my-4"></div>
+                        ${resultContent}
+                    </div>
+                `;
+            }).join('');
+
+            return `<div class="space-y-6">${resultList}</div>`;
+        }
+
+
+        function generateRecordsContent() {
+            const notesHtml = DATA.records.notes.map(note => `
+                <div class="card p-4 mb-4">
+                    <div class="flex justify-between items-center text-sm font-medium mb-2">
+                        <span>Record ID: ${note.id}</span>
+                        <span class="text-gray-600 text-xs">${note.time} | ${note.date}</span>
+                    </div>
+                    <p class="text-gray-700 text-sm leading-relaxed">${note.content}</p>
+                </div>
+            `).join('');
+
+            const vaccinationsHtml = DATA.records.vaccinations.map(vax => `
+                <div class="card p-4 mb-2 space-y-1">
+                    <p class="text-sm"><span class="font-medium">Last Vaccination:</span> ${vax.date}</p>
+                    <p class="text-sm"><span class="font-medium">Vaccine Name:</span> ${vax.name}</p>
+                    <p class="text-sm"><span class="font-medium">Administered By:</span> ${vax.administered}</p>
+                </div>
+            `).join('');
+
+
+            return `
+                <div class="mb-8">
+                    <h2 class="text-xl font-semibold mb-3">Consultation Records</h2>
+                    <div class="space-y-4">
+                        ${notesHtml}
+                    </div>
+                </div>
+                
+                <div class="mb-8">
+                    <h2 class="text-xl font-semibold mb-3">Vaccination Records</h2>
+                    <div class="space-y-4">
+                        ${vaccinationsHtml}
+                    </div>
+                </div>
+            `;
+        }
+
+        function generateSettingsContent() {
+            const settings = DATA.settings;
+            return `
+                <div class="card p-6 mb-8">
+                    <div class="flex justify-between items-center mb-4">
+                        <h2 class="text-lg font-semibold">Profile Information</h2>
+                        <button onclick="handleSettingsAction('update-profile')" class="btn-schedule inline-flex items-center px-3 py-1 text-xs rounded-full border">
+                            Update Profile
+                        </button>
+                    </div>
+                    <div class="space-y-2 text-sm">
+                        <p><span class="font-medium">Given Name:</span> ${settings.givenName}</p>
+                        <p><span class="font-medium">Surname:</span> ${settings.surname}</p>
+                    </div>
+                    <div class="h-px bg-gray-200 my-4"></div>
+                    <div class="space-y-2 text-sm">
+                        <p><span class="font-medium">Contact Number:</span> ${settings.contactNumber}</p>
+                        <p><span class="font-medium">Email:</span> ${settings.email}</p>
+                        <p class="flex items-center"><span class="font-medium mr-2">Password:</span> ********** <button onclick="handleSettingsAction('change-password')" class="text-blue-500 hover:text-blue-600 ml-2">(Change Password)</button></p>
+                    </div>
+                    <div class="h-px bg-gray-200 my-4"></div>
+                    <div class="space-y-2 text-sm">
+                        <p><span class="font-medium">Date of Birth:</span> ${settings.dateOfBirth}</p>
+                        <p><span class="font-medium">Emergency Contact Person:</span> ${settings.emergencyContact}</p>
+                        <p><span class="font-medium">Emergency Contact:</span> ${settings.emergencyNumber}</p>
+                    </div>
+                </div>
+                
+                <div class="flex justify-end">
+                    <button onclick="handleSettingsAction('log-out')" class="px-6 py-2 text-sm rounded-lg bg-gray-100 text-gray-700 hover:bg-gray-200 transition-colors border border-gray-300">
+                        Log Out
+                    </button>
+                </div>
+            `;
+        }
+        
+        function handleSettingsAction(action) {
+            let title = '';
+            let body = '';
+            let showConfirm = false;
+            let onConfirm = null;
+
+            switch (action) {
+                case 'update-profile':
+                    title = 'Update Profile';
+                    body = 'A form to update your name and contact details would open here.';
+                    break;
+                case 'change-password':
+                    title = 'Change Password';
+                    body = 'A new window or form for password change would appear.';
+                    break;
+                case 'log-out':
+                    title = 'Confirm Log Out';
+                    body = 'Are you sure you want to log out of the HIMS dashboard?';
+                    showConfirm = true;
+                    // Redirect to index.html
+                    onConfirm = () => { 
+                        window.location.href = 'index.html';
+                    };
+                    break;
+            }
+            showModal(title, body, showConfirm, onConfirm);
+        }
+
+        // --- Initialize the application on page load ---
+        window.onload = setupListeners;
+    </script>
+</body>
+</html>

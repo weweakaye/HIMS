@@ -1,0 +1,481 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HIMS Admin Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Shared Custom Styles */
+        :root {
+            --primary-green: #E6F7E8; /* Lightest green for headers/active states */
+            --dark-text: #2c3e50; /* Dark text/icon color */
+            --light-border: #d2d6dc; /* Light gray border for cards/inputs */
+            --nav-active-bg: #E6F7E8; 
+            --nav-active-text: #16a34a; /* Darker green for text/icon when active */
+            --btn-schedule-text: #16a34a;
+            --btn-schedule-border: #6ee7b7; 
+            --btn-log-out-bg: #f9fafb; /* Light gray for Log Out button */
+            
+            font-family: 'Inter', sans-serif;
+        }
+
+        body {
+            background-color: #f4f6f8;
+            color: var(--dark-text);
+        }
+
+        .card {
+            border: 1px solid var(--light-border);
+            border-radius: 12px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+            background-color: white;
+        }
+
+        /* Logo Style */
+        .hims-logo-dashboard {
+            width: 70px; 
+            height: auto;
+            margin-right: 8px; 
+            vertical-align: middle; 
+        }
+
+        .sidebar {
+            width: 280px;
+            background-color: white;
+            border-right: 1px solid var(--light-border);
+        }
+
+        .header-bar {
+            background-color: var(--primary-green);
+            border-bottom: 1px solid var(--light-border);
+        }
+        
+        .nav-item {
+            color: var(--dark-text);
+        }
+        .nav-item.active-page {
+            background-color: var(--nav-active-bg);
+            color: var(--nav-active-text);
+            font-weight: 600;
+            border-right: 3px solid var(--nav-active-text);
+        }
+        .nav-item:not(.active-page):hover {
+            background-color: #f7f7f7;
+        }
+        
+        /* Admin Action Button Styles (Create Account / Update Profile) */
+        .btn-action {
+            background-color: white;
+            color: var(--btn-schedule-text);
+            border: 1px solid var(--btn-schedule-border);
+            transition: all 0.2s;
+            padding: 0.5rem 1rem;
+            border-radius: 9999px; /* Pill shape */
+            font-weight: 500;
+        }
+        .btn-action:hover {
+            background-color: #f0fdf4;
+        }
+        
+        .btn-log-out {
+            border: 1px solid var(--light-border);
+            background-color: var(--btn-log-out-bg);
+        }
+
+        /* Input Styles (used in Create Account form) */
+        .admin-input {
+            background-color: #f0f4f7;
+            border: 1px solid var(--light-border);
+            border-radius: 8px;
+            padding: 0.5rem 1rem;
+            width: 100%;
+        }
+
+        /* Modal Backdrop */
+        .modal-backdrop {
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: 50;
+        }
+    </style>
+</head>
+<body class="h-screen overflow-hidden">
+
+    <div id="admin-dashboard-view" class="h-full flex flex-row">
+        <div class="sidebar flex flex-col justify-between py-6">
+            <div>
+                <div class="px-6 mb-10 flex items-center">
+                    <img src="logo.png" alt="HIMS Logo" class="hims-logo-dashboard">
+                    <div class="leading-tight">
+                        <h1 class="text-2xl font-bold sr-only">HIMS</h1>
+                        <p class="text-xs text-gray-500">Healthcare Information Management System</p>
+                    </div>
+                </div>
+
+                <nav id="nav-links-admin">
+                    <a href="#" data-page="staff-accounts" class="nav-item flex items-center px-6 py-3 text-sm transition-colors duration-150 active-page">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 mr-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 2a6 6 0 0 0 0 12"/><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><path d="M18.5 8a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5z"/></svg>
+                        Staff Accounts
+                    </a>
+                    <a href="#" data-page="patient-accounts" class="nav-item flex items-center px-6 py-3 text-sm transition-colors duration-150">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 mr-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                        Patient Accounts
+                    </a>
+                    <a href="#" data-page="logs" class="nav-item flex items-center px-6 py-3 text-sm transition-colors duration-150">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 mr-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/><path d="M10 13h4"/><path d="M10 17h4"/></svg>
+                        Logs
+                    </a>
+                    <a href="#" data-page="settings" class="nav-item flex items-center px-6 py-3 text-sm transition-colors duration-150">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 mr-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.22a2 2 0 0 1-1.41 1.41l-.22.22a2 2 0 0 0-2.42 1.39l-.49 1.34a2 2 0 0 0-1 1.58v.44a2 2 0 0 0 2 2v.22a2 2 0 0 1 1.41 1.41l.22.22a2 2 0 0 0 1.39 2.42l1.34.49a2 2 0 0 0 1.58 1h.44a2 2 0 0 0 2-2v-.22a2 2 0 0 1 1.41-1.41l.22-.22a2 2 0 0 0 2.42-1.39l.49-1.34a2 2 0 0 0 1-1.58v-.44a2 2 0 0 0-2-2v-.22a2 2 0 0 1-1.41-1.41l-.22-.22a2 2 0 0 0-1.39-2.42l-1.34-.49a2 2 0 0 0-1.58-1z"/><circle cx="12" cy="12" r="3"/></svg>
+                        Settings
+                    </a>
+                </nav>
+            </div>
+
+            <div class="px-6 pt-6 border-t border-gray-100 flex items-center">
+                <div class="h-8 w-8 rounded-full bg-green-200 flex items-center justify-center text-xs font-bold text-green-700 mr-3">SN</div>
+                <div class="leading-tight">
+                    <p class="text-sm font-medium">Shiori Novella</p>
+                    <p class="text-xs text-gray-500">Admin</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="flex-1 flex flex-col overflow-auto main-content bg-white">
+            <header class="header-bar p-4 md:p-6 shadow-sm">
+                <h2 class="text-xl font-semibold">Shiori Novella</h2>
+            </header>
+
+            <main id="admin-page-container" class="p-4 md:p-8 flex-1 overflow-y-auto">
+                </main>
+        </div>
+    </div>
+    
+    <div id="admin-app-modal" class="fixed inset-0 hidden items-center justify-center modal-backdrop">
+        <div class="bg-white rounded-xl shadow-2xl w-full max-w-sm m-4 p-6 transform transition-all scale-100">
+            <h3 id="admin-modal-title" class="text-lg font-semibold mb-3"></h3>
+            <p id="admin-modal-body" class="text-gray-600 mb-6 text-sm"></p>
+            <div class="flex justify-end space-x-3">
+                <button onclick="adminCloseModal()" class="px-4 py-2 text-sm rounded-lg bg-gray-100 text-gray-700 hover:bg-gray-200 transition-colors">Close</button>
+                <button id="admin-modal-confirm-btn" class="hidden px-4 py-2 text-sm rounded-lg bg-red-600 text-white hover:bg-red-700 transition-colors">Confirm</button>
+            </div>
+        </div>
+    </div>
+
+
+    <script type="text/javascript">
+        // --- Data (Removed Mock Tag) ---
+        const ADMIN_DATA = {
+            adminName: 'Shiori Novella',
+            adminRole: 'Admin',
+            staffAccounts: [
+                { id: 'D240622', name: 'Dr. Cecilia Immergreen', role: 'Pediatrician' },
+                { id: 'D240622', name: 'Dr. Gigi Murin', role: 'Physician' },
+                { id: 'A200913', name: 'Amelia Watson', role: 'Admin' },
+                { id: 'N230731', name: 'Nerissa Ravencroft', role: 'Nurse' },
+                { id: 'D240622', name: 'Dr. John Doe', role: 'Dermatologist' }
+            ],
+            patientAccounts: [
+                { id: '0000425', name: 'Elizabeth Rose Bloodflame' },
+                { id: '0000041', name: 'Aki Rosenthal' },
+                { id: '0000365', name: 'Anya Melfissa' },
+                { id: '0000001', name: 'Kaela Kovalskia' },
+                { id: '0000067', name: 'Moona Hoshinova' },
+                { id: '0000023', name: 'Kobo Kanaeru' },
+                { id: '0000005', name: 'Mori Calliope' }
+            ],
+            auditLogs: [
+                { id: 'DS-02025113001', time: '2025/11/30 09:31:54', performedBy: 'Dr. Cecilia Immergreen', action: 'Updated Lab Records of Patient ID 0000041' },
+                { id: 'NS-02025113002', time: '2025/11/30 15:23:04', performedBy: 'Nerissa Ravencroft', action: 'Triaged new patient' },
+                { id: 'AS-02025112930', time: '2025/11/29 20:20:16', performedBy: 'Amelia Watson', action: 'Added new Nurse Account' },
+                { id: 'PA-02025112929', time: '2025/11/29 18:45:32', performedBy: 'Anya Melfissa', action: 'Scheduled a new Appointment' },
+                { id: 'PA-02025112928', time: '2025/11/29 18:26:38', performedBy: 'Gigi Murin', action: 'Requested patient record access' }
+            ],
+            currentDashboardPage: 'staff-accounts'
+        };
+
+        // --- Utility Functions (Modal) ---
+        function adminShowModal(title, body, showConfirm = false, onConfirm = null) {
+            document.getElementById('admin-modal-title').textContent = title;
+            document.getElementById('admin-modal-body').innerHTML = body;
+            const confirmBtn = document.getElementById('admin-modal-confirm-btn');
+            
+            if (showConfirm && onConfirm) {
+                confirmBtn.classList.remove('hidden');
+                confirmBtn.onclick = () => { 
+                    onConfirm(); 
+                    adminCloseModal(); 
+                };
+            } else {
+                confirmBtn.classList.add('hidden');
+                confirmBtn.onclick = null;
+            }
+
+            document.getElementById('admin-app-modal').classList.remove('hidden');
+            document.getElementById('admin-app-modal').classList.add('flex');
+        }
+
+        function adminCloseModal() {
+            document.getElementById('admin-app-modal').classList.remove('flex');
+            document.getElementById('admin-app-modal').classList.add('hidden');
+        }
+
+        // --- Dashboard Rendering Logic ---
+
+        function renderAdminDashboardPage(pageId, subView = null) {
+            ADMIN_DATA.currentDashboardPage = pageId;
+            const container = document.getElementById('admin-page-container');
+            let content = '';
+            let title = '';
+
+            // Update active navigation link
+            document.querySelectorAll('#nav-links-admin .nav-item').forEach(item => {
+                item.classList.remove('active-page');
+            });
+            const activeLink = document.querySelector(`#nav-links-admin .nav-item[data-page="${pageId}"]`);
+            if (activeLink) {
+                activeLink.classList.add('active-page');
+            }
+            
+            switch (pageId) {
+                case 'staff-accounts':
+                    if (subView === 'create') {
+                        title = 'Create Staff Account';
+                        content = generateCreateStaffAccountForm();
+                    } else {
+                        title = 'Staff Accounts';
+                        content = generateStaffAccountsContent();
+                    }
+                    break;
+                case 'patient-accounts':
+                    title = 'Patient Accounts';
+                    content = generatePatientAccountsContent();
+                    break;
+                case 'logs':
+                    title = 'Audit Logs';
+                    content = generateAuditLogsContent();
+                    break;
+                case 'settings':
+                    title = 'Account Settings';
+                    content = generateAdminSettingsContent();
+                    break;
+                default:
+                    title = 'Welcome';
+                    content = '<p class="text-gray-600">Select a section from the sidebar.</p>';
+            }
+
+            container.innerHTML = `
+                <h1 class="text-2xl md:text-3xl font-semibold mb-6">${title}</h1>
+                ${content}
+            `;
+        }
+        
+        // --- Content Generators ---
+        
+        function generateStaffAccountsContent() {
+            // Staff Accounts List
+            const accountCards = ADMIN_DATA.staffAccounts.map(account => `
+                <div class="card p-4 mb-4">
+                    <p class="text-base font-semibold">User ID: ${account.id}</p>
+                    <p class="text-sm text-gray-700">Name: ${account.name}</p>
+                    <p class="text-sm text-gray-700">Role: ${account.role}</p>
+                </div>
+            `).join('');
+
+            return `
+                <div class="flex justify-end mb-4">
+                    <button onclick="renderAdminDashboardPage('staff-accounts', 'create')" class="btn-action inline-flex items-center space-x-1 px-3 py-1">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>
+                        <span>Create Account</span>
+                    </button>
+                </div>
+                <div class="space-y-4">
+                    ${accountCards}
+                </div>
+            `;
+        }
+        
+        function generateCreateStaffAccountForm() {
+            // Create Staff Account Form
+            return `
+                <form onsubmit="handleCreateStaffAccount(event)" class="w-full max-w-xl mx-auto md:mx-0">
+                    <div class="card p-8 mb-8 space-y-4">
+                        <div class="space-y-3">
+                            <label class="block"><span class="text-sm font-medium block mb-1">Given Name:</span> <input type="text" id="staff-given-name" class="admin-input" required></label>
+                            <label class="block"><span class="text-sm font-medium block mb-1">Surname:</span> <input type="text" id="staff-surname" class="admin-input" required></label>
+                            <label class="block"><span class="text-sm font-medium block mb-1">Staff Role:</span> 
+                                <select id="staff-role" class="admin-input" required>
+                                    <option value="">Select Role</option>
+                                    <option>Doctor</option>
+                                    <option>Nurse</option>
+                                    <option>Admin</option>
+                                </select>
+                            </label>
+                        </div>
+                        <div class="h-px bg-gray-200 my-4"></div>
+                        <div class="space-y-3">
+                            <label class="block"><span class="text-sm font-medium block mb-1">Email:</span> <input type="email" id="staff-email" class="admin-input" required></label>
+                            <label class="block"><span class="text-sm font-medium block mb-1">Temporary Password:</span> 
+                                <input type="text" id="staff-password" value="temporary-01055" class="admin-input bg-gray-200" readonly>
+                            </label>
+                        </div>
+                        
+                        <div class="flex justify-end pt-4">
+                            <button type="submit" class="btn-action inline-flex items-center px-6 py-2">
+                                Create Account
+                            </button>
+                        </div>
+                    </div>
+                </form>
+                <div class="mt-4 flex justify-end w-full max-w-xl mx-auto md:mx-0">
+                    <button onclick="renderAdminDashboardPage('staff-accounts')" class="text-sm text-gray-500 hover:text-gray-700 underline">Back to Staff List</button>
+                </div>
+            `;
+        }
+
+        function handleCreateStaffAccount(e) {
+            e.preventDefault();
+            const form = e.target;
+            const givenName = document.getElementById('staff-given-name').value;
+            const surname = document.getElementById('staff-surname').value;
+            const role = document.getElementById('staff-role').value;
+            
+            // 1. Show the success modal (Removed Mock Tag)
+            adminShowModal(
+                'Account Created', 
+                `New ${role} account created for ${givenName} ${surname}.<br>Temporary Password: <b>temporary-01055</b>`, 
+                false, 
+                null
+            );
+
+            // 2. Clear the form fields (optional, but good practice)
+            form.reset();
+
+            // 3. Navigate back to the staff accounts list immediately after showing the modal.
+            renderAdminDashboardPage('staff-accounts');
+        }
+        
+        function generatePatientAccountsContent() {
+            // Patient Accounts List
+            const accountCards = ADMIN_DATA.patientAccounts.map(account => `
+                <div class="card p-4 mb-4">
+                    <p class="text-base font-semibold">Patient ID: ${account.id}</p>
+                    <p class="text-sm text-gray-700">Name: ${account.name}</p>
+                </div>
+            `).join('');
+
+            return `
+                <div class="space-y-4">
+                    ${accountCards}
+                </div>
+            `;
+        }
+        
+        function generateAuditLogsContent() {
+            // Audit Logs List
+            const logCards = ADMIN_DATA.auditLogs.map(log => `
+                <div class="card p-4 mb-4 flex justify-between items-start">
+                    <div class="flex-1">
+                        <p class="text-base font-semibold">Log ID: ${log.id}</p>
+                        <p class="text-sm text-gray-700">Performed By: ${log.performedBy}</p>
+                        <p class="text-sm text-gray-700">Action: ${log.action}</p>
+                    </div>
+                    <p class="text-xs text-gray-500 text-right whitespace-nowrap">Timestamp: ${log.time}</p>
+                </div>
+            `).join('');
+
+            return `
+                <div class="space-y-4">
+                    ${logCards}
+                </div>
+            `;
+        }
+
+        function generateAdminSettingsContent() {
+            // Settings View
+            return `
+                <div class="card p-6 mb-8">
+                    <div class="flex justify-between items-center mb-4">
+                        <h2 class="text-lg font-semibold">Account Settings</h2>
+                        <button onclick="adminHandleSettingsAction('update-profile')" class="btn-action inline-flex items-center px-3 py-1 text-xs rounded-full border">
+                            Update Profile
+                        </button>
+                    </div>
+                    <div class="space-y-2 text-sm">
+                        <p><span class="font-medium">Given Name:</span> Shiori</p>
+                        <p><span class="font-medium">Surname:</span> Novella</p>
+                        <p><span class="font-medium">Staff Role:</span> Admin</p>
+                    </div>
+                    <div class="h-px bg-gray-200 my-4"></div>
+                    <div class="space-y-2 text-sm">
+                        <p><span class="font-medium">Email:</span> s.novella@hims.com</p>
+                        <p class="flex items-center"><span class="font-medium mr-2">Password:</span> ********** <button onclick="adminHandleSettingsAction('change-password')" class="text-blue-500 hover:text-blue-600 ml-2">(Change Password)</button></p>
+                    </div>
+                </div>
+                
+                <div class="card p-6 mb-8">
+                    <h2 class="text-lg font-semibold mb-4">System Settings</h2>
+                    <div class="space-y-2 text-sm">
+                        <p><span class="font-medium">Default Language:</span> English (Philippines)</p>
+                        <p><span class="font-medium">Unit of Measurement (Length/Weight):</span> Metric Units</p>
+                        <p><span class="font-medium">Unit of Measurement (Temperature):</span> Celsius</p>
+                        <p><span class="font-medium">Time Zone:</span> GMT+8 (Philippine Standard Time)</p>
+                    </div>
+                </div>
+
+                <div class="flex justify-end">
+                    <button onclick="adminHandleSettingsAction('log-out')" class="btn-log-out px-6 py-2 text-sm rounded-lg text-gray-700 transition-colors">
+                        Log Out
+                    </button>
+                </div>
+            `;
+        }
+        
+        function adminHandleSettingsAction(action) {
+            let title = '';
+            let body = '';
+            let showConfirm = false;
+            let onConfirm = null;
+            
+            switch (action) {
+                case 'update-profile':
+                    title = 'Update Profile';
+                    // Removed 'mock' text
+                    body = 'A form to update your name and contact details would open here.';
+                    break;
+                case 'change-password':
+                    title = 'Change Password';
+                    // Removed 'mock' text
+                    body = 'A new window or form for password change would appear.';
+                    break;
+                case 'log-out':
+                    title = 'Confirm Log Out';
+                    body = 'Are you sure you want to log out of the HIMS dashboard?';
+                    showConfirm = true;
+                    // --- MODIFICATION: Redirect to index.html immediately upon confirmation ---
+                    onConfirm = () => { 
+                        window.location.href = 'index.html';
+                    };
+                    break;
+            }
+            adminShowModal(title, body, showConfirm, onConfirm);
+        }
+
+
+        // --- Initialize the application on page load ---
+        window.onload = function() {
+            // Set up navigation listeners for the Admin Dashboard
+            document.getElementById('nav-links-admin').addEventListener('click', (e) => {
+                const target = e.target.closest('.nav-item');
+                if (target) {
+                    e.preventDefault();
+                    const pageId = target.getAttribute('data-page');
+                    renderAdminDashboardPage(pageId);
+                }
+            });
+            // Initial render of the default page (Staff Accounts List)
+            renderAdminDashboardPage(ADMIN_DATA.currentDashboardPage);
+        };
+    </script>
+</body>
+</html>

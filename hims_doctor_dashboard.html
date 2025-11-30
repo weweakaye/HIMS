@@ -1,0 +1,531 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HIMS Doctor Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Shared Custom Styles from Patient View */
+        :root {
+            --primary-green: #E6F7E8; /* Lightest green for headers/active states */
+            --dark-text: #2c3e50; /* Dark text/icon color */
+            --light-border: #d2d6dc; /* Light gray border for cards/inputs */
+            --nav-active-bg: #E6F7E8; 
+            --nav-active-text: #16a34a; /* Darker green for text/icon when active */
+            --btn-schedule-text: #16a34a;
+            --btn-schedule-border: #6ee7b7; 
+            --btn-cancel-bg: #fef2f2;
+            --btn-cancel-text: #ef4444;
+            --btn-unavailable-border: #fca5a5;
+            font-family: 'Inter', sans-serif;
+        }
+
+        body {
+            background-color: #f4f6f8;
+            color: var(--dark-text);
+        }
+
+        .card {
+            border: 1px solid var(--light-border);
+            border-radius: 12px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+        }
+
+        /* Logo Style */
+        .hims-logo-dashboard {
+            width: 70px; /* Adjusted size to fit well in the sidebar header */
+            height: auto;
+            margin-right: 8px; 
+            vertical-align: middle; 
+        }
+
+        .sidebar {
+            width: 280px;
+            background-color: white;
+            border-right: 1px solid var(--light-border);
+        }
+
+        .header-bar {
+            background-color: var(--primary-green);
+            border-bottom: 1px solid var(--light-border);
+        }
+        
+        .nav-item {
+            color: var(--dark-text);
+        }
+        .nav-item.active-page {
+            background-color: var(--nav-active-bg);
+            color: var(--nav-active-text);
+            font-weight: 600;
+            border-right: 3px solid var(--nav-active-text);
+        }
+        .nav-item:not(.active-page):hover {
+            background-color: #f7f7f7;
+        }
+        
+        /* Doctor Specific Button Styles */
+        .btn-action {
+            background-color: white;
+            color: var(--btn-schedule-text);
+            border: 1px solid var(--btn-schedule-border);
+            transition: all 0.2s;
+            padding: 0.5rem 1rem;
+            border-radius: 9999px; /* Pill shape */
+            font-weight: 500;
+        }
+        .btn-action:hover {
+            background-color: #f0fdf4;
+        }
+        
+        .btn-log-out {
+            border: 1px solid var(--light-border);
+            background-color: #f9fafb;
+        }
+
+        /* Modal Backdrop */
+        .modal-backdrop {
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: 50;
+        }
+    </style>
+</head>
+<body class="h-screen overflow-hidden">
+
+    <div id="doctor-dashboard-view" class="h-full flex flex-row">
+        <div class="sidebar flex flex-col justify-between py-6">
+            <div>
+                <div class="px-6 mb-10 flex items-center">
+                    <img src="logo.png" alt="HIMS Logo" class="hims-logo-dashboard">
+                    <div class="leading-tight">
+                        <h1 class="text-2xl font-bold sr-only">HIMS</h1>
+                        <p class="text-xs text-gray-500">Healthcare Information Management System</p>
+                    </div>
+                </div>
+
+                <nav id="nav-links-doctor">
+                    <a href="#" data-page="patients" class="nav-item flex items-center px-6 py-3 text-sm transition-colors duration-150 active-page">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 mr-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                        Patients
+                    </a>
+                    <a href="#" data-page="medical-records" class="nav-item flex items-center px-6 py-3 text-sm transition-colors duration-150">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 mr-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/><path d="M10 13H8"/><path d="M16 13h-2"/><path d="M16 17h-6"/></svg>
+                        Medical Records
+                    </a>
+                    <a href="#" data-page="appointments" class="nav-item flex items-center px-6 py-3 text-sm transition-colors duration-150">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 mr-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 2v4"/><path d="M16 2v4"/><rect width="18" height="18" x="3" y="4" rx="2"/><path d="M3 10h18"/><path d="M8 14h.01"/><path d="M12 14h.01"/><path d="M16 14h.01"/></svg>
+                        Appointments
+                    </a>
+                    <a href="#" data-page="settings" class="nav-item flex items-center px-6 py-3 text-sm transition-colors duration-150">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 mr-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.22a2 2 0 0 1-1.41 1.41l-.22.22a2 2 0 0 0-2.42 1.39l-.49 1.34a2 2 0 0 0-1 1.58v.44a2 2 0 0 0 2 2v.22a2 2 0 0 1 1.41 1.41l.22.22a2 2 0 0 0 1.39 2.42l1.34.49a2 2 0 0 0 1.58 1h.44a2 2 0 0 0 2-2v-.22a2 2 0 0 1 1.41-1.41l.22-.22a2 2 0 0 0 2.42-1.39l.49-1.34a2 2 0 0 0 1-1.58v-.44a2 2 0 0 0-2-2v-.22a2 2 0 0 1-1.41-1.41l-.22-.22a2 2 0 0 0-1.39-2.42l-1.34-.49a2 2 0 0 0-1.58-1z"/><circle cx="12" cy="12" r="3"/></svg>
+                        Settings
+                    </a>
+                </nav>
+            </div>
+
+            <div class="px-6 pt-6 border-t border-gray-100 flex items-center">
+                <div class="h-8 w-8 rounded-full bg-green-200 flex items-center justify-center text-xs font-bold text-green-700 mr-3">CI</div>
+                <div class="leading-tight">
+                    <p class="text-sm font-medium">Dr. Cecilia Immergreen</p>
+                    <p class="text-xs text-gray-500">Pediatrician</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="flex-1 flex flex-col overflow-auto main-content bg-white">
+            <header class="header-bar p-4 md:p-6 shadow-sm">
+                <h2 class="text-xl font-semibold">Dr. Cecilia Immergreen</h2>
+            </header>
+
+            <main id="doctor-page-container" class="p-4 md:p-8 flex-1 overflow-y-auto">
+                </main>
+        </div>
+    </div>
+    
+    <div id="doctor-app-modal" class="fixed inset-0 hidden items-center justify-center modal-backdrop">
+        <div class="bg-white rounded-xl shadow-2xl w-full max-w-sm m-4 p-6 transform transition-all scale-100">
+            <h3 id="doctor-modal-title" class="text-lg font-semibold mb-3"></h3>
+            <p id="doctor-modal-body" class="text-gray-600 mb-6 text-sm"></p>
+            <div class="flex justify-end space-x-3">
+                <button onclick="doctorCloseModal()" class="px-4 py-2 text-sm rounded-lg bg-gray-100 text-gray-700 hover:bg-gray-200 transition-colors">Close</button>
+                <button id="doctor-modal-confirm-btn" class="hidden px-4 py-2 text-sm rounded-lg bg-red-600 text-white hover:bg-red-700 transition-colors">Confirm</button>
+            </div>
+        </div>
+    </div>
+
+
+    <script type="text/javascript">
+        // --- Data (Renamed from Mock Data) ---
+        const DOCTOR_DATA = {
+            doctorName: 'Dr. Cecilia Immergreen',
+            doctorRole: 'Pediatrician',
+            patients: [
+                { id: '0000041', lastConsultation: '2025 September 16', name: 'John Doe', dob: '2010 January 1', address: '123 Elm St', contact: '0912-345-6789', emergency: 'Jane Doe', emergencyContact: '0912-987-6543' },
+                { id: '0000365', lastConsultation: '2025 June 10', name: 'Jane Smith', dob: '2005 May 15', address: '456 Oak Ave', contact: '0911-222-3333', emergency: 'Mark Smith', emergencyContact: '0911-444-5555' },
+                { id: '0000001', lastConsultation: '2025 May 21', name: 'Alice Johnson', dob: '2000 January 1', address: '789 Pine Ln', contact: '0912-345-6789', emergency: 'Bob Johnson', emergencyContact: '0912-987-6543' },
+                { id: '0000067', lastConsultation: '2025 April 3', name: 'Robert Brown', dob: '1995 October 20', address: '101 Maple Rd', contact: '0913-555-6666', emergency: 'Sarah Brown', emergencyContact: '0913-777-8888' },
+                { id: '0000023', lastConsultation: 'N/A', name: 'Emily Davis', dob: '1988 March 25', address: '202 Birch Dr', contact: '0914-111-2222', emergency: 'David Davis', emergencyContact: '0914-333-4444' }
+            ],
+            consultationRecords: [
+                { id: '0000001-2025-002', date: '2025 May 21', time: '9:26 AM - 9:47 AM', patientId: '0000001', notes: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.', vitals: { temp: '37.1 C', hr: '67 bpm', bpSys: '110/70 mmHg', bpDias: '120/79 mmHg', weight: '69 kg', height: '167 cm' } },
+                { id: '0000001-2025-001', date: '2025 April 30', time: '9:15 AM - 9:33 AM', patientId: '0000001', notes: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.', vitals: {} },
+                { id: '0000001-2023-001', date: '2023 August 15', time: '9:30 AM - 9:57 AM', patientId: '0000001', notes: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.', vitals: {} },
+                { id: '0000001-2022-002', date: '2022 December 2', time: '9:26 AM - 9:46 AM', patientId: '0000001', notes: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.', vitals: {} }
+            ],
+            labResults: [
+                { id: '0000001-2025-002-CBC01', date: '2025 May 22', test: 'Complete Blood Count', patientId: '0000001', result: 'WBC: 6,700/mm3, HGB: 15.5 g/dL, RBC: 4.7 million/mm3, HCT: 45%, Platelets: 200,000/mm3' },
+            ],
+            appointments: [
+                { patientId: '0000067', type: 'Consultation', date: 'December 2, 2025' },
+                { patientId: '0000365', type: 'Consultation', date: 'December 3, 2025' },
+                { patientId: '0000402', type: 'Weekly Checkup', date: 'December 3, 2025' },
+                { patientId: '0000903', type: 'Follow-up Checkup', date: 'December 4, 2025' },
+            ],
+            currentDashboardPage: 'patients',
+            activePatientId: null // Stores the ID of the patient being viewed in Medical Records
+        };
+
+        // --- Utility Functions (Modal) ---
+        function doctorShowModal(title, body, showConfirm = false, onConfirm = null) {
+            document.getElementById('doctor-modal-title').textContent = title;
+            // Note: Keeping textContent for the main body for security/simplicity unless HTML tags are needed.
+            // However, the Emergency Contact view needs HTML tags (<br>), so we use innerHTML here.
+            document.getElementById('doctor-modal-body').innerHTML = body; 
+            const confirmBtn = document.getElementById('doctor-modal-confirm-btn');
+            
+            if (showConfirm && onConfirm) {
+                confirmBtn.classList.remove('hidden');
+                confirmBtn.onclick = () => { 
+                    onConfirm(); 
+                    doctorCloseModal(); 
+                };
+            } else {
+                confirmBtn.classList.add('hidden');
+                confirmBtn.onclick = null;
+            }
+
+            document.getElementById('doctor-app-modal').classList.remove('hidden');
+            document.getElementById('doctor-app-modal').classList.add('flex');
+        }
+
+        function doctorCloseModal() {
+            document.getElementById('doctor-app-modal').classList.remove('flex');
+            document.getElementById('doctor-app-modal').classList.add('hidden');
+        }
+
+        // --- Dashboard Rendering Logic ---
+
+        function renderDoctorDashboardPage(pageId, subView = null) {
+            DOCTOR_DATA.currentDashboardPage = pageId;
+            const container = document.getElementById('doctor-page-container');
+            let content = '';
+            let title = '';
+
+            // Update active navigation link
+            document.querySelectorAll('#nav-links-doctor .nav-item').forEach(item => {
+                item.classList.remove('active-page');
+            });
+            const activeLink = document.querySelector(`#nav-links-doctor .nav-item[data-page="${pageId}"]`);
+            if (activeLink) {
+                activeLink.classList.add('active-page');
+            }
+            
+            // Set the active patient ID if we're moving to the medical records view
+            if (pageId === 'medical-records' && subView) {
+                DOCTOR_DATA.activePatientId = subView;
+            } else if (pageId === 'patients') {
+                 DOCTOR_DATA.activePatientId = null;
+            }
+
+
+            switch (pageId) {
+                case 'patients':
+                    title = 'Patient List';
+                    content = generatePatientsListContent();
+                    break;
+                case 'medical-records':
+                    if (DOCTOR_DATA.activePatientId) {
+                         // Patient Name/ID is dynamically generated within the content function
+                         content = generateMedicalRecordsContent(DOCTOR_DATA.activePatientId);
+                         title = 'Patient Information';
+                    } else {
+                        // If somehow we land here without an active patient, go back to the list
+                        content = generatePatientsListContent();
+                        title = 'Patient List';
+                        DOCTOR_DATA.currentDashboardPage = 'patients';
+                    }
+                    break;
+                case 'appointments':
+                    title = 'Appointments';
+                    content = generateDoctorAppointmentsContent();
+                    break;
+                case 'settings':
+                    title = 'Settings';
+                    content = generateDoctorSettingsContent();
+                    break;
+                default:
+                    title = 'Welcome';
+                    content = '<p class="text-gray-600">Select a section from the sidebar.</p>';
+            }
+
+            container.innerHTML = `
+                <h1 class="text-2xl md:text-3xl font-semibold mb-6">${DOCTOR_DATA.activePatientId ? '' : title}</h1>
+                ${content}
+            `;
+        }
+        
+        // --- Content Generators ---
+        
+        function generatePatientsListContent() {
+             const patientCards = DOCTOR_DATA.patients.map(p => `
+                 <div class="card p-4 mb-4 flex justify-between items-center">
+                     <div class="flex-1">
+                         <p class="text-base font-semibold">Patient ID: ${p.id}</p>
+                         ${p.lastConsultation !== 'N/A' ? `<p class="text-sm text-gray-600">Last Consultation: ${p.lastConsultation}</p>` : `<p class="text-sm text-gray-500 italic">No recent consultation.</p>`}
+                     </div>
+                     <button onclick="renderDoctorDashboardPage('medical-records', '${p.id}')" class="btn-action inline-flex items-center space-x-2 px-3 py-1">
+                         <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/><path d="M10 13h4"/><path d="M10 17h4"/><path d="M10 9h.01"/></svg>
+                         <span>View Medical Record</span>
+                     </button>
+                 </div>
+             `).join('');
+
+             return `
+                 <div class="flex justify-end mb-4">
+                     <p class="text-sm text-gray-500 flex items-center">
+                         Sort By: 
+                         <select class="ml-2 border border-gray-300 rounded-lg text-sm p-1">
+                             <option selected>Date</option>
+                             <option>ID</option>
+                         </select>
+                     </p>
+                 </div>
+                 <div class="space-y-4">
+                     ${patientCards}
+                 </div>
+             `;
+        }
+
+        function generateMedicalRecordsContent(patientId) {
+            const patient = DOCTOR_DATA.patients.find(p => p.id === patientId);
+            const records = DOCTOR_DATA.consultationRecords.filter(r => r.patientId === patientId);
+            const lab = DOCTOR_DATA.labResults.filter(l => l.patientId === patientId);
+            
+            if (!patient) return `<p class="text-red-500">Patient not found.</p>`;
+            
+            // Check if we should display the detailed record view (mocking a click on "View Complete Medical Record")
+            const shouldShowDetailedRecord = patientId === '0000001' && DOCTOR_DATA.currentDashboardPage === 'medical-records';
+            
+            if (shouldShowDetailedRecord) {
+                 const latestRecord = records[0];
+                 const latestLab = lab.find(l => l.id === '0000001-2025-002-CBC01');
+                 
+                 return `
+                      <h2 class="text-xl font-semibold mb-6">Patient ID: ${patient.id}</h2>
+                      <h3 class="text-lg font-bold mb-4">Record ID: ${latestRecord.id}</h3>
+                      
+                      <div class="flex flex-col md:flex-row gap-4 mb-8">
+                          <div class="card p-6 flex-1">
+                              <p class="text-sm"><span class="font-medium">Consultation Date:</span> ${latestRecord.date}</p>
+                              <p class="text-sm mb-4"><span class="font-medium">Start Time:</span> ${latestRecord.time.split(' - ')[0]} | <span class="font-medium">End Time:</span> ${latestRecord.time.split(' - ')[1]}</p>
+                              <h4 class="text-base font-semibold mb-2">Clinician Notes:</h4>
+                              <p class="text-sm text-gray-700 leading-relaxed">${latestRecord.notes}</p>
+                          </div>
+                          
+                          <div class="card p-6 w-full md:w-1/3 space-y-2 text-sm">
+                              <h4 class="text-base font-semibold mb-2">Vital Signs</h4>
+                              <p><span class="font-medium">Temperature:</span> ${latestRecord.vitals.temp}</p>
+                              <p><span class="font-medium">Heart Rate:</span> ${latestRecord.vitals.hr}</p>
+                              <p><span class="font-medium">Systolic Blood Pressure:</span> ${latestRecord.vitals.bpSys}</p>
+                              <p><span class="font-medium">Diastolic Blood Pressure:</span> ${latestRecord.vitals.bpDias}</p>
+                              <p><span class="font-medium">Weight:</span> ${latestRecord.vitals.weight}</p>
+                              <p><span class="font-medium">Height:</span> ${latestRecord.vitals.height}</p>
+                          </div>
+                      </div>
+                      
+                      ${latestLab ? `
+                          <div class="card p-6">
+                              <h3 class="text-lg font-bold mb-4">Lab ID: ${latestLab.id}</h3>
+                              <p class="text-sm mb-1"><span class="font-medium">Test:</span> ${latestLab.test}</p>
+                              <p class="text-sm mb-3"><span class="font-medium">Result Date:</span> ${latestLab.date}</p>
+                              <div class="h-px bg-gray-200 my-4"></div>
+                              <p class="font-semibold mt-2 mb-2">Result:</p>
+                              <div class="text-sm text-gray-700 grid grid-cols-2 md:grid-cols-4 gap-2">
+                                  ${latestLab.result.split(', ').map(line => `<span>${line}</span>`).join('')}
+                              </div>
+                          </div>
+                      ` : '<p class="text-gray-500">No lab results associated with this record.</p>'}
+                      
+                      <button onclick="renderDoctorDashboardPage('patients')" class="mt-8 btn-action">
+                          <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 mr-1 inline-block" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+                          Back to Patient List
+                      </button>
+                 `;
+            }
+            
+            // --- Patient Demographic Card (Overview) ---
+            const demographicCard = `
+                <h2 class="text-xl font-semibold mb-3">Patient Information</h2>
+                <h3 class="text-lg font-semibold mb-4">${patient.name} (Patient ID: ${patient.id})</h3>
+                <div class="card p-6 mb-8 space-y-3 text-sm text-gray-700">
+                    <p class="flex items-center"><svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 mr-2" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="4" rx="2"/><path d="M3 10h18"/><path d="M8 2v4"/><path d="M16 2v4"/><path d="M7 14h10"/></svg>
+                    Date of Birth: ${patient.dob}</p>
+                    <p class="flex items-center"><svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 mr-2" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0z"/><circle cx="12" cy="10" r="3"/></svg>
+                    Address: <span onclick="doctorShowModal('Address', '${patient.address}')" class="text-blue-500 cursor-pointer hover:underline ml-1">Click to view Address</span></p>
+                    <p class="flex items-center"><svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 mr-2" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2 2h-4a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2z"/><path d="M12 16.92v3a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2z"/><path d="M8 8V6a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+                    Contact Number: ${patient.contact}</p>
+                    <p class="flex items-center"><svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 mr-2" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="m9 12 2 2 4-4"/></svg>
+                    Emergency Contact: <span onclick="doctorShowModal('Emergency Contact', 'Person: ${patient.emergency}<br>Contact: ${patient.emergencyContact}')" class="text-blue-500 cursor-pointer hover:underline ml-1">Click to view Emergency Contact</span></p>
+                </div>
+            `;
+            
+            // --- Consultation Records List (Overview) ---
+            const consultationList = `
+                <div class="flex justify-between items-center mb-3">
+                    <h2 class="text-xl font-semibold">Consultation Records</h2>
+                    <button onclick="renderDoctorDashboardPage('medical-records', '0000001')" class="btn-action inline-flex items-center space-x-1 px-3 py-1 text-sm">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/></svg>
+                        <span>View Complete Medical Record</span>
+                    </button>
+                </div>
+                <div class="space-y-4">
+                    ${records.map(r => `
+                        <div class="card p-4">
+                            <div class="flex justify-between items-start text-sm font-medium mb-2">
+                                <span class="text-base font-semibold">Record ID: ${r.id}</span>
+                                <span class="text-gray-600 text-xs">${r.time} | ${r.date}</span>
+                            </div>
+                            <p class="text-gray-700 text-sm leading-relaxed">${r.notes.substring(0, 150)}...</p>
+                        </div>
+                    `).join('')}
+                    
+                    <div class="card p-4 space-y-1">
+                        <p class="text-sm"><span class="font-medium">Last Vaccination:</span> 2024 December 14</p>
+                        <p class="text-sm"><span class="font-medium">Vaccine Name:</span> holovax</p>
+                        <p class="text-sm"><span class="font-medium">Administered By:</span> Dr. Gigi Murin</p>
+                    </div>
+                </div>
+            `;
+            
+            // If not viewing a specific record, show the patient overview
+            return demographicCard + consultationList;
+        }
+
+        function generateDoctorAppointmentsContent() {
+            const todayAppointments = DOCTOR_DATA.appointments.filter(a => a.date.includes('December 2')); // Mocking 'Today'
+            const weekAppointments = DOCTOR_DATA.appointments.filter(a => !a.date.includes('December 2')); // Mocking 'This Week'
+            
+            const todayHtml = todayAppointments.length > 0 ? todayAppointments.map(a => generateAppointmentCard(a)).join('') : 
+                `<p class="text-gray-600 mb-6">You do not have any appointments scheduled today.</p>`;
+            
+            const weekHtml = weekAppointments.map(a => generateAppointmentCard(a)).join('');
+
+            return `
+                <div class="mb-8">
+                    <h2 class="text-xl font-semibold mb-3">Today</h2>
+                    ${todayHtml}
+                </div>
+                
+                <div class="mb-8">
+                    <h2 class="text-xl font-semibold mb-3">This week</h2>
+                    <div class="space-y-4">
+                        ${weekHtml}
+                    </div>
+                </div>
+            `;
+        }
+        
+        function generateAppointmentCard(appt) {
+            return `
+                <div class="card p-4 mb-4">
+                    <p class="text-sm font-semibold">Patient ID: ${appt.patientId}</p>
+                    <p class="text-sm text-gray-700"><span class="font-medium">Appointment:</span> ${appt.type}</p>
+                    <p class="text-sm text-gray-700"><span class="font-medium">Date:</span> ${appt.date}</p>
+                </div>
+            `;
+        }
+
+        function generateDoctorSettingsContent() {
+            return `
+                <div class="card p-6 mb-8">
+                    <div class="flex justify-between items-center mb-4">
+                        <h2 class="text-lg font-semibold">Profile Information</h2>
+                        <button onclick="doctorHandleSettingsAction('update-profile')" class="btn-action inline-flex items-center px-3 py-1 text-xs rounded-full border">
+                            Update Profile
+                        </button>
+                    </div>
+                    <div class="space-y-2 text-sm">
+                        <p><span class="font-medium">Given Name:</span> Cecilia</p>
+                        <p><span class="font-medium">Surname:</span> Immergreen</p>
+                        <p><span class="font-medium">Staff Role:</span> Pediatrician</p>
+                    </div>
+                    <div class="h-px bg-gray-200 my-4"></div>
+                    <div class="space-y-2 text-sm">
+                        <p><span class="font-medium">Email:</span> c.immergreen@hims.com</p>
+                        <p class="flex items-center"><span class="font-medium mr-2">Password:</span> ********** <button onclick="doctorHandleSettingsAction('change-password')" class="text-blue-500 hover:text-blue-600 ml-2">(Change Password)</button></p>
+                    </div>
+                    <div class="h-px bg-gray-200 my-4"></div>
+                    <div class="space-y-2 text-sm">
+                        <p><span class="font-medium">Date of Birth:</span> N/A</p>
+                        <p><span class="font-medium">Emergency Contact Person:</span> N/A</p>
+                        <p><span class="font-medium">Emergency Contact:</span> N/A</p>
+                    </div>
+                </div>
+                
+                <div class="flex justify-end">
+                    <button onclick="doctorHandleSettingsAction('log-out')" class="btn-log-out px-6 py-2 text-sm rounded-lg text-gray-700 transition-colors">
+                        Log Out
+                    </button>
+                </div>
+            `;
+        }
+        
+        function doctorHandleSettingsAction(action) {
+            let title = '';
+            let body = '';
+            let showConfirm = false;
+            let onConfirm = null;
+            
+            switch (action) {
+                case 'update-profile':
+                    title = 'Update Profile';
+                    // Removed '(Mock Action)'
+                    body = 'A form to update your name and contact details would open here.';
+                    break;
+                case 'change-password':
+                    title = 'Change Password';
+                    // Removed '(Mock Action)'
+                    body = 'A new window or form for password change would appear.';
+                    break;
+                case 'log-out':
+                    title = 'Confirm Log Out';
+                    body = 'Are you sure you want to log out of the HIMS dashboard?';
+                    showConfirm = true;
+                    // --- MODIFICATION: Redirect to index.html immediately upon confirmation ---
+                    onConfirm = () => { 
+                        window.location.href = 'index.html';
+                    };
+                    break;
+            }
+            // Note: When calling doctorShowModal, the modal body text is handled by the switch statement
+            doctorShowModal(title, body, showConfirm, onConfirm);
+        }
+
+
+        // --- Initialize the application on page load ---
+        window.onload = function() {
+            // Set up navigation listeners for the Doctor Dashboard
+            document.getElementById('nav-links-doctor').addEventListener('click', (e) => {
+                const target = e.target.closest('.nav-item');
+                if (target) {
+                    e.preventDefault();
+                    const pageId = target.getAttribute('data-page');
+                    renderDoctorDashboardPage(pageId);
+                }
+            });
+            // Initial render of the default page (Patients List)
+            renderDoctorDashboardPage(DOCTOR_DATA.currentDashboardPage);
+        };
+    </script>
+</body>
+</html>
