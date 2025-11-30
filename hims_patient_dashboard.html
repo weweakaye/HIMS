@@ -50,12 +50,11 @@
         }
 
         /* Dashboard specific styles */
-        /* MODIFIED: Sidebar for responsiveness */
         .sidebar {
             width: 260px; /* Narrower for mobile */
             background-color: white;
             border-right: 1px solid var(--light-border);
-            z-index: 40; /* Above the main content */
+            z-index: 40; 
         }
 
         .header-bar {
@@ -230,12 +229,16 @@
     <script type="text/javascript">
         // --- Data ---
         const DATA = {
-            // MODIFICATION 1: All four appointments are now set to 'Scheduled'
+            // MODIFICATION: 1 Scheduled (for cancel/reschedule template) and 3 Available (for schedule template).
             appointments: [
+                // 1. Scheduled Appointment (This is the one that will have the reschedule inputs below it)
                 { id: 1, name: 'Dr. Gigi Murin', specialty: 'Physician', date: 'December 21, 2025', status: 'Scheduled' },
-                { id: 4, name: 'Dr. John Doe', specialty: 'Dermatologist', date: 'December 28, 2025', status: 'Scheduled' },
-                { id: 5, name: 'Dr. Alice Cooper', specialty: 'Cardiologist', date: 'January 5, 2026', status: 'Scheduled' },
-                { id: 6, name: 'Dr. Bob Marley', specialty: 'Neurologist', date: 'February 10, 2026', status: 'Scheduled' },
+                // 2. Available Appointment
+                { id: 2, name: 'Dr. Cecilia Immergreen', specialty: 'Pediatrician', date: 'N/A', status: 'Available' },
+                // 3. Available Appointment
+                { id: 3, name: 'Dr. Alice Cooper', specialty: 'Cardiologist', date: 'N/A', status: 'Available' },
+                // 4. Available Appointment
+                { id: 4, name: 'Dr. John Doe', specialty: 'Dermatologist', date: 'N/A', status: 'Available' },
             ],
             labResults: [
                 { id: '0000425-2025-003-U01', test: 'Urinalysis', date: 'December 2, 2025', status: 'Not released', result: null },
@@ -421,11 +424,15 @@
         // --- Page Content Generators ---
 
         function generateAppointmentsContent() {
-            // We use Dr. Gigi Murin (ID 1) as the 'main' appointment template
-            const mainScheduledAppt = DATA.appointments.find(a => a.id === 1);
+            // We find the first scheduled appointment to use the special date input section
+            const firstScheduledAppt = DATA.appointments.find(a => a.status === 'Scheduled');
             
             let initialMessage = '';
-            let dateInputs = '';
+
+            // Only display the prompt if there are NO scheduled appointments.
+            if (!DATA.appointments.some(a => a.status === 'Scheduled')) {
+                initialMessage = `<p class="text-gray-600 mb-6">You do not have any scheduled appointments. Schedule one below.</p>`;
+            }
 
             const monthsOptions = `
                 <option value="January">January</option>
@@ -436,105 +443,121 @@
                 <option value="June">June</option>
                 <option value="July">July</option>
                 <option value="August">August</option>
-                <option value="September" ${!mainScheduledAppt ? 'selected' : ''}>September</option>
+                <option value="September">September</option>
                 <option value="October">October</option>
                 <option value="November">November</option>
-                <option value="December" ${mainScheduledAppt ? 'selected' : ''}>December</option>
+                <option value="December" selected>December</option>
             `;
-
-            if (mainScheduledAppt) {
-                initialMessage = ``;
-                dateInputs = `
-                    <div class="mb-6 flex space-x-4 items-center flex-wrap">
-                        <label class="text-sm font-medium text-gray-700">Month:</label>
-                        <select class="p-2 border border-gray-300 rounded-lg text-sm w-32">
-                            ${monthsOptions}
-                        </select>
-                        <label class="text-sm font-medium text-gray-700">Day:</label>
-                        <input type="text" value="21" class="p-2 border border-gray-300 rounded-lg text-sm w-16 text-center">
-                    </div>
-                `;
-            } else {
-                initialMessage = `<p class="text-gray-600 mb-6">You do not have any appointments. Schedule one below.</p>`;
-                dateInputs = `
-                    <div class="mb-6 flex space-x-4 items-center flex-wrap">
-                        <label class="text-sm font-medium text-gray-700">Month:</label>
-                        <select class="p-2 border border-gray-300 rounded-lg text-sm w-32">
-                            ${monthsOptions}
-                        </select>
-                        <label class="text-sm font-medium text-gray-700">Day:</label>
-                        <input type="text" value="21" class="p-2 border border-gray-300 rounded-lg text-sm w-16 text-center">
-                    </div>
-                `;
-            }
-
-            // Generate the cards based on the required templates
-            let mainCardHtml = '';
-            let otherCardsHtml = [];
-            let otherScheduledCards = [];
+            
+            let allCardsHtml = [];
 
             DATA.appointments.forEach(app => {
                 let actionButtons;
-                let statusBadge = '';
+                let statusInfo = '';
                 
-                // Card 1: Main Scheduled Appointment (Gigi Murin)
-                if (app.id === 1) {
-                    statusBadge = `<span class="text-sm font-semibold text-gray-600">Date: ${app.date}</span>`;
-                    actionButtons = `
-                        <div class="flex space-x-4 flex-wrap">
-                            <button onclick="handleAppointmentAction('cancel', ${app.id}, '${app.name}')" class="btn-cancel inline-flex items-center text-sm mb-2 md:mb-0">
-                                Cancel Appointment
-                            </button>
-                            <button onclick="handleAppointmentAction('reschedule', ${app.id}, '${app.name}')" class="btn-schedule inline-flex items-center text-sm">
-                                Reschedule
-                            </button>
-                        </div>
-                    `;
-                    mainCardHtml = `
-                        <div id="card-1" class="card p-4 sm:p-6 mb-4 main-scheduled-card">
-                            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-2">
-                                <div>
-                                    <h3 class="text-lg font-bold">${app.name}</h3>
-                                    <p class="text-gray-500 text-sm">${app.specialty}</p>
-                                </div>
-                                ${statusBadge}
+                switch (app.status) {
+                    case 'Scheduled':
+                        // Template 1: Scheduled Appointment with Cancel/Reschedule buttons and hidden date inputs
+                        statusInfo = `<p class="text-sm font-semibold text-gray-600">Date: ${app.date}</p>`;
+                        actionButtons = `
+                            <div class="flex space-x-4 flex-wrap">
+                                <button onclick="handleAppointmentAction('cancel', ${app.id}, '${app.name}')" class="btn-cancel inline-flex items-center text-sm mb-2 md:mb-0">
+                                    Cancel Appointment
+                                </button>
+                                <button onclick="toggleRescheduleForm(${app.id})" class="btn-schedule inline-flex items-center text-sm">
+                                    Reschedule
+                                </button>
                             </div>
-                            <div class="mt-4">${actionButtons}</div>
-                        </div>
-                    `;
-                // Other Scheduled cards (ID 4, 5, 6)
-                } else if (app.status === 'Scheduled') {
-                    actionButtons = `<span class="badge-scheduled">${app.status}: ${app.date}</span>`;
-                    otherScheduledCards.push(`
-                        <div id="card-${app.id}" class="card p-4 sm:p-6 mb-4">
-                            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-2">
-                                <div>
-                                    <h3 class="text-lg font-bold">${app.name}</h3>
-                                    <p class="text-gray-500 text-sm">${app.specialty}</p>
+                        `;
+                        
+                        // --- INPUT FIELDS FOR RESCHEDULING (Hidden by default, now inside the card) ---
+                        const dateInputFields = `
+                             <div id="reschedule-form-${app.id}" class="reschedule-form hidden mt-4 pt-4 border-t border-gray-100">
+                                <h4 class="text-sm font-semibold mb-2">Select New Date:</h4>
+                                <div class="flex space-x-4 items-center flex-wrap">
+                                    <label class="text-sm font-medium text-gray-700">Month:</label>
+                                    <select class="p-2 border border-gray-300 rounded-lg text-sm w-32">
+                                        ${monthsOptions}
+                                    </select>
+                                    <label class="text-sm font-medium text-gray-700">Day:</label>
+                                    <input type="text" value="21" class="p-2 border border-gray-300 rounded-lg text-sm w-16 text-center">
+                                    <button onclick="handleAppointmentAction('confirm-reschedule', ${app.id}, '${app.name}')" class="btn-schedule inline-flex items-center text-sm px-4 py-2">
+                                        Update Date
+                                    </button>
                                 </div>
                             </div>
-                            <div class="mt-4">${actionButtons}</div>
-                        </div>
-                    `);
-                } 
-                // Available and Unavailable card logic is removed/unnecessary as all are scheduled.
+                        `;
+
+                        allCardsHtml.push(`
+                            <div id="card-${app.id}" class="card p-4 sm:p-6 mb-4">
+                                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-2">
+                                    <div>
+                                        <h3 class="text-lg font-bold">${app.name}</h3>
+                                        <p class="text-gray-500 text-sm">${app.specialty}</p>
+                                    </div>
+                                </div>
+                                
+                                ${dateInputFields} 
+
+                                <div class="mt-4">${actionButtons}</div>
+                            </div>
+                        `);
+                        break;
+
+                    case 'Available':
+                        // Template 2: Available to Schedule with Schedule button
+                        statusInfo = '';
+                        actionButtons = `
+                            <div class="mt-4">
+                                <button onclick="handleAppointmentAction('schedule', ${app.id}, '${app.name}')" class="btn-schedule inline-flex items-center text-sm">
+                                    Schedule an appointment
+                                </button>
+                            </div>
+                        `;
+                        allCardsHtml.push(`
+                            <div id="card-${app.id}" class="card p-4 sm:p-6 mb-4">
+                                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-2">
+                                    <div>
+                                        <h3 class="text-lg font-bold">${app.name}</h3>
+                                        <p class="text-gray-500 text-sm">${app.specialty}</p>
+                                    </div>
+                                </div>
+                                ${actionButtons}
+                            </div>
+                        `);
+                        break;
+                    default:
+                        // Ignore any other status type 
+                        return; 
+                }
             });
-            
-            // Combine all other scheduled cards into the final HTML array
-            otherCardsHtml = otherScheduledCards;
 
 
             return `
-                ${mainScheduledAppt ? `<h2 class="text-xl font-semibold mb-3">Your Next Appointment</h2>` : initialMessage}
+                <h2 class="text-xl font-semibold mb-3">Appointments</h2>
                 
-                ${mainScheduledAppt ? `<div class="space-y-4 mb-8">${mainCardHtml}</div>` : ''}
-                ${dateInputs}
+                ${initialMessage}
 
                 <div class="space-y-4 mt-6">
-                    <h2 class="text-xl font-semibold mb-3">Other Scheduled Appointments</h2>
-                    ${otherCardsHtml.join('')}
+                    ${allCardsHtml.join('')}
                 </div>
             `;
+        }
+
+        // Function to toggle the date input fields when Reschedule is clicked
+        function toggleRescheduleForm(id) {
+            // Hide all other open reschedule forms
+            document.querySelectorAll('.reschedule-form').forEach(form => {
+                if (form.id !== `reschedule-form-${id}`) {
+                    form.classList.add('hidden');
+                }
+            });
+            
+            // Toggle the specific form
+            const form = document.getElementById(`reschedule-form-${id}`);
+            if (form) {
+                form.classList.toggle('hidden');
+            }
         }
 
 
@@ -543,9 +566,9 @@
             let body = '';
             let showConfirm = false;
             let onConfirm = null;
-            
+
             const appt = DATA.appointments.find(a => a.id === id);
-            const date = appt ? appt.date : 'N/A';
+            const date = appt && appt.date !== 'N/A' ? appt.date : 'the selected date';
 
             switch (action) {
                 case 'cancel':
@@ -555,8 +578,12 @@
                     onConfirm = () => showModal('Success', `The appointment with ${doctorName} has been cancelled.`, false);
                     break;
                 case 'reschedule':
-                    title = 'Reschedule Appointment';
-                    body = `Rescheduling UI would appear here. Select a new date for ${doctorName}.`;
+                    // This case is only used by the primary button and is handled by toggleRescheduleForm
+                    return; 
+                case 'confirm-reschedule':
+                    // Triggered by the "Update Date" button inside the new form
+                    title = 'Reschedule Confirmed';
+                    body = `You have successfully requested to reschedule your appointment with ${doctorName} to the new date. A staff member will confirm the change.`;
                     break;
                 case 'schedule':
                     title = 'Schedule Appointment';
